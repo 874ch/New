@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Kcal</title>
+<meta name="description" content="Suivi de calories minimaliste : tu écris ce que tu manges, ça calcule.">
+<meta name="theme-color" content="#0a0e12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kcal">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn" id="prevDay" aria-label="Jour précédent">
+    <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+
+  <button class="date-btn" id="dateLabel" aria-label="Revenir à aujourd'hui">
+    <span class="date-main">Aujourd'hui</span>
+    <span class="date-sub"></span>
+  </button>
+
+  <button class="icon-btn" id="nextDay" aria-label="Jour suivant">
+    <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+
+  <button class="icon-btn" id="openSettings" aria-label="Réglages">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.7 1.7 0 008 19.4a1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H2a2 2 0 110-4h.1A1.7 1.7 0 004.6 8a1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V2a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H22a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- ------------------------------------------------------------- compteur -->
+  <section class="hero">
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <circle class="ring-track" cx="100" cy="100" r="86"/>
+        <circle class="ring-fill" cx="100" cy="100" r="86" id="ringFill"/>
+      </svg>
+      <div class="ring-center">
+        <div class="big-num" id="remaining">2140</div>
+        <div class="big-label" id="remainingLabel">kcal restantes</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-val" id="eaten">0</span>
+        <span class="stat-key">mangé</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val" id="target">2140</span>
+        <span class="stat-key">objectif</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val" id="protein">0 g</span>
+        <span class="stat-key">protéines</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- saisie -->
+  <form class="composer" id="composer" autocomplete="off">
+    <input
+      id="input"
+      type="text"
+      placeholder="2 œufs, 80 g de riz, une pomme…"
+      enterkeyhint="done"
+      autocapitalize="none"
+      autocorrect="off"
+      spellcheck="false">
+    <button type="submit" class="add-btn" aria-label="Ajouter">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </form>
+  <div class="preview" id="preview" hidden></div>
+
+  <!-- ------------------------------------------------------------- raccourcis -->
+  <div class="chips" id="chips"></div>
+
+  <!-- ---------------------------------------------------------------- repas -->
+  <ul class="entries" id="entries"></ul>
+
+  <div class="empty" id="empty" hidden>
+    <p>Rien pour l'instant.</p>
+    <button class="ghost-btn" id="copyYesterday">Copier la veille</button>
+  </div>
+
+  <!-- --------------------------------------------------------------- semaine -->
+  <section class="week">
+    <h2>7 derniers jours</h2>
+    <div class="week-bars" id="weekBars"></div>
+    <p class="week-note" id="weekNote"></p>
+  </section>
+</main>
+
+<!-- ================================================================ feuilles -->
+<div class="scrim" id="scrim" hidden></div>
+
+<!-- édition d'une ligne -->
+<section class="sheet" id="editSheet" hidden aria-modal="true" role="dialog">
+  <div class="sheet-handle"></div>
+  <h2 id="editTitle">Modifier</h2>
+
+  <div class="field">
+    <label for="editGrams">Quantité (g / ml)</label>
+    <input id="editGrams" type="number" inputmode="decimal" min="0" step="1">
+  </div>
+
+  <div class="field">
+    <label for="editKcal">Calories</label>
+    <input id="editKcal" type="number" inputmode="numeric" min="0" step="1">
+  </div>
+
+  <div class="field" id="altField">
+    <label>C'était plutôt…</label>
+    <div class="alts" id="alts"></div>
+  </div>
+
+  <div class="sheet-actions">
+    <button class="danger-btn" id="deleteEntry">Supprimer</button>
+    <button class="primary-btn" id="saveEntry">Enregistrer</button>
+  </div>
+</section>
+
+<!-- réglages -->
+<section class="sheet" id="settingsSheet" hidden aria-modal="true" role="dialog">
+  <div class="sheet-handle"></div>
+  <h2>Réglages</h2>
+
+  <div class="field">
+    <label for="targetA">Objectif quotidien</label>
+    <input id="targetA" type="number" inputmode="numeric" min="0" step="5">
+  </div>
+  <div class="field">
+    <label for="switchDate">…jusqu'au (inclus)</label>
+    <input id="switchDate" type="date">
+  </div>
+  <div class="field">
+    <label for="targetB">Puis objectif quotidien</label>
+    <input id="targetB" type="number" inputmode="numeric" min="0" step="5">
+  </div>
+
+  <div class="field">
+    <label>Aliments appris <span class="muted" id="customCount"></span></label>
+    <div class="custom-list" id="customList"></div>
+  </div>
+
+  <div class="sheet-actions col">
+    <button class="ghost-btn" id="exportData">Exporter mes données</button>
+    <button class="ghost-btn" id="importData">Importer une sauvegarde</button>
+    <button class="primary-btn" id="closeSettings">Terminé</button>
+  </div>
+  <input id="importFile" type="file" accept="application/json" hidden>
+  <p class="version">Données stockées uniquement sur cet appareil.</p>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/foods.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
