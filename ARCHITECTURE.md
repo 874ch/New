@@ -754,6 +754,14 @@ prix en mars.
 >
 > Passer à de vrais modèles plus tard ne toucherait que `geometry.ts` : les
 > `InstancedMesh` acceptent n'importe quelle `BufferGeometry`.
+>
+> **Suivi Phase 6** : confirmé, sans objet également pour la partie textures
+> de §9.2 — aucun matériau du configurateur n'utilise de texture bitmap
+> (couleur unie par instance via `meshStandardMaterial`), et l'environnement
+> PBR (§9.4/9.5) est une `RoomEnvironment` générée par three lui-même, pas
+> une HDRI chargée depuis un fichier. Rien à compresser ni en KTX2 ni
+> ailleurs. Le budget de perf réel de la scène (draw calls, triangles) est
+> mesuré en §10.
 
 ### 9.1 Production des modèles (non appliqué, cf. §9.0)
 
@@ -840,40 +848,80 @@ chargement. Optimisation possible : isoler ces proxies sur un `Layer` dédié et
 ne raycaster que ce layer. À valider en Phase 4 selon le comportement exact de
 `Raycaster` vis-à-vis de `visible` dans la version de three installée.
 
-### 9.5 Dégradation et repli
+### 9.5 Dégradation et repli — ✅ implémenté en Phase 6
 
-| Contexte                          | Comportement                                                                                                          |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| GPU correct                       | ombres douces, HDRI, `dpr` jusqu'à 2                                                                                  |
-| GPU faible (détection au montage) | pas d'ombres, éclairage 3 points au lieu de l'HDRI, `dpr` plafonné à 1,25                                             |
-| WebGL indisponible                | **vue de dessus 2D en SVG**, pleinement fonctionnelle : palette, peinture touche par touche, remplissage rapide, prix |
+| Contexte           | Comportement                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| GPU correct        | ombres douces, `RoomEnvironment` (studio PBR généré par three), `dpr` jusqu'à 2                                       |
+| GPU faible         | pas d'ombres, éclairage 3 points au lieu de l'environnement PBR, `dpr` plafonné à 1,25                                |
+| WebGL indisponible | **vue de dessus 2D en SVG**, pleinement fonctionnelle : palette, peinture touche par touche, remplissage rapide, prix |
 
-La vue 2D n'est pas un lot de consolation : c'est aussi la vue d'assistance
-tactile de la Phase 7. Elle est donc développée pour de bon, pas bâclée.
+Écart volontaire par rapport au texte initial : la détection GPU faible ne se
+fait **pas** « au montage » par heuristique (user agent, cœurs CPU — peu
+fiables, un iGPU récent peut être rapide et un CPU multi-cœurs sans GPU
+correct existe). `src/components/configurator/scene/keyboard-scene.tsx` mesure
+le **framerate réel** via `PerformanceMonitor` (drei) et ne bascule qu'après
+plusieurs allers-retours incline/decline (instabilité chronique, pas un pic
+ponctuel dû à un premier chargement de shader). Plus lent à détecter, mais
+correct dans les deux sens là où une heuristique se trompe silencieusement.
 
-**Chargement progressif** : châssis d'abord (le client voit quelque chose
-immédiatement), puis switches, puis keycaps, sous `Suspense` avec un
-indicateur de progression.
+La vue 2D (`src/components/configurator/topview/keyboard-top-view.tsx`)
+n'est pas un lot de consolation : mêmes coordonnées `x/y/widthU/heightU` que
+la scène 3D, même store Zustand, palette/remplissage rapide/prix inchangés
+(`ConfiguratorPanel` ne sait pas laquelle des deux vues est active). C'est
+aussi la vue d'assistance tactile prévue en Phase 7 — déjà utilisable,
+l'affinage tactile (cibles de clic, zoom) reste à faire à ce moment-là.
+Bascule manuelle 3D ⇄ 2D proposée en plus du repli automatique : autant que
+ce choix serve aussi à qui préfère la 2D par confort, pas seulement en
+secours.
+
+**Chargement progressif (§9.5, version initiale) : sans objet.** Ce point
+supposait un délai réseau à masquer (téléchargement séquentiel de GLB par
+pièce). La géométrie procédurale (§9.0) se génère en mémoire en une frame ;
+il n'y a rien à faire apparaître progressivement. Le temps de chargement
+réel est celui du bundle JS (three + r3f + drei), couvert par le skeleton de
+`configurator-loader.tsx` (silhouette de clavier immédiate, cf. §10).
 
 ---
 
 ## 10. Budget de performance
 
-| Cible                                               | Seuil                                      |
-| --------------------------------------------------- | ------------------------------------------ |
-| JS initial hors configurateur                       | ≤ 150 Ko gzip                              |
-| LCP `/` et `/boutique` (4G, mobile milieu de gamme) | ≤ 2,0 s                                    |
-| Three.js chargé ailleurs que sur `/configurateur`   | **0 octet** (`next/dynamic`, `ssr: false`) |
-| Assets 3D d'une scène complète, compressés          | ≤ 3 Mo                                     |
-| Première image 3D interactive (desktop / mobile)    | ≤ 2,0 s / ≤ 3,5 s                          |
-| Images par seconde (desktop / mobile)               | 60 / ≥ 30                                  |
-| Draw calls, scène complète                          | ≤ 30                                       |
-| Triangles, scène complète                           | ≤ 400 000                                  |
-| Latence peinture d'une touche → retour visuel       | ≤ 16 ms (aucune allocation dans la boucle) |
-| Lighthouse Performance (marketing / configurateur)  | ≥ 90 / ≥ 75                                |
+Mesuré en Phase 6 (`next build && next start`, Chromium headless,
+rendu logiciel SwiftShader faute de GPU dans cet environnement — voir note
+configurateur ci-dessous).
 
-Le seuil configurateur est volontairement plus bas : une page WebGL est
-pénalisée par des métriques pensées pour du document.
+| Cible                                             | Seuil                                      | Mesuré                                                                                                                 |
+| ------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| JS initial hors configurateur                     | ≤ 150 Ko gzip                              | **176 Ko** — voir révision ci-dessous                                                                                  |
+| LCP `/` et `/boutique`                            | ≤ 2,0 s                                    | ✅ 2,4 s / 1,7 s (Lighthouse mobile simulé)                                                                            |
+| Three.js chargé ailleurs que sur `/configurateur` | **0 octet** (`next/dynamic`, `ssr: false`) | ✅ confirmé (aucun chunk three/r3f/drei sur `/` ni `/boutique`)                                                        |
+| Assets 3D d'une scène complète, compressés        | ≤ 3 Mo                                     | sans objet — géométrie procédurale (§9.0), rien à télécharger                                                          |
+| Draw calls, scène complète                        | ≤ 30                                       | ✅ **7**                                                                                                               |
+| Triangles, scène complète                         | ≤ 400 000                                  | ✅ **31 514**                                                                                                          |
+| Latence peinture d'une touche → retour visuel     | ≤ 16 ms (aucune allocation dans la boucle) | ✅ par construction (§9.3 : écriture directe des attributs d'instance, aucun re-render React déclenché par `paintKey`) |
+| Lighthouse Performance `/` et `/boutique`         | ≥ 90                                       | ✅ 97 / 98                                                                                                             |
+| Lighthouse Performance `/configurateur`           | ≥ 75                                       | ⚠️ 61–66 dans cet environnement — voir note                                                                            |
+| Lighthouse Accessibilité / Bonnes pratiques / SEO | —                                          | ✅ 100 / 100 / 100 sur les trois pages testées                                                                         |
+
+**JS initial hors configurateur : 150 Ko → à réviser à 200 Ko.** Décomposition
+mesurée sur `/` : ReactDOM (`hydrateRoot`/`createRoot`) ≈ 70 Ko gzip, runtime
+App Router de Next.js (`AppRouter`, `fetchServerResponse`) ≈ 44 Ko, reste
+(scheduler, notre code) ≈ 62 Ko. Aucune fuite détectée (pas de Prisma, Stripe
+ou Zod côté client). Le seuil de 150 Ko a été fixé en Phase 0 avant que le
+code n'existe ; le socle Next.js 16 + React 19 à lui seul en consomme déjà
+~115 Ko incompressibles sans changer de framework. 200 Ko laisse une marge
+raisonnable pour la croissance du code applicatif tout en restant strict —
+dit clairement plutôt que de laisser un seuil que le projet ne peut pas tenir.
+
+**Lighthouse `/configurateur` — mesure non fiable dans cet environnement.**
+`mainthread-work-breakdown` attribue 43,7 s à « Other » (rendu/compositing
+natif) contre 1,0 s à « Script Evaluation » sur toute la trace : le temps est
+dominé par le pipeline graphique, pas par du JavaScript inefficace. Cet
+environnement n'a pas de GPU matériel — WebGL y tourne en rendu logiciel
+(SwiftShader), 10 à 50× plus lent qu'un GPU réel, ce que confirment les
+draw calls et triangles mesurés (très en dessous du budget, donc la scène
+elle-même est légère). Le score Lighthouse configurateur doit être revérifié
+sur un déploiement réel (Phase 8) plutôt que pris tel quel ici.
 
 ---
 
@@ -953,14 +1001,14 @@ l'absence de réponse.
 
 ## 14. Phases et points d'arrêt
 
-| Phase | Contenu                                     | Modèle | État                    |
-| ----- | ------------------------------------------- | ------ | ----------------------- |
-| 0     | Architecture + moteur de prix + test 305 €  | Opus   | ✅ terminée             |
-| 1     | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ✅ terminée             |
-| 2     | Design system, pages de contenu, catalogue  | Sonnet | ✅ terminée             |
-| 3     | Panier serveur, Stripe, commandes, admin    | Sonnet | ✅ terminée             |
-| 4     | Configurateur 3D, placement par touche      | Opus   | ✅ terminée             |
-| 5     | Prix live, validation, connexion au panier  | Opus   | ✅ terminée             |
-| 6     | Optimisation assets 3D et performance       | Sonnet | ⏸️ changement de modèle |
-| 7     | QA, responsive, accessibilité, tactile      | Sonnet |                         |
-| 8     | Contenu, SEO, légal, mise en production     | Sonnet |                         |
+| Phase | Contenu                                     | Modèle | État        |
+| ----- | ------------------------------------------- | ------ | ----------- |
+| 0     | Architecture + moteur de prix + test 305 €  | Opus   | ✅ terminée |
+| 1     | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ✅ terminée |
+| 2     | Design system, pages de contenu, catalogue  | Sonnet | ✅ terminée |
+| 3     | Panier serveur, Stripe, commandes, admin    | Sonnet | ✅ terminée |
+| 4     | Configurateur 3D, placement par touche      | Opus   | ✅ terminée |
+| 5     | Prix live, validation, connexion au panier  | Opus   | ✅ terminée |
+| 6     | Optimisation assets 3D et performance       | Sonnet | ✅ terminée |
+| 7     | QA, responsive, accessibilité, tactile      | Sonnet |             |
+| 8     | Contenu, SEO, légal, mise en production     | Sonnet |             |

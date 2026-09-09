@@ -100,9 +100,12 @@ export const fr = {
       added: 'Clavier ajouté au panier.',
       viewCart: 'Voir le panier',
       blockedIncomplete: 'Complétez toutes les positions pour ajouter au panier.',
-      noWebgl:
-        'Votre navigateur ne prend pas en charge la 3D (WebGL). Essayez un navigateur récent pour utiliser le configurateur.',
-      loading: 'Chargement du configurateur…',
+      webglUnavailableNotice: '3D non disponible sur ce navigateur — vue de dessus activée.',
+      renderMode: {
+        label: 'Affichage',
+        '3d': '3D',
+        '2d': 'Vue de dessus',
+      },
     },
     cart: {
       title: 'Panier',

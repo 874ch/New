@@ -30,7 +30,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <KeyboardGlyph className="aspect-[4/3]" />
         <div className="space-y-2 p-4">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium">{product.name}</h3>
+            <h2 className="font-medium">{product.name}</h2>
             {badge && <Badge tone={totalStock < 10 ? 'accent' : 'neutral'}>{badge}</Badge>}
           </div>
           <p className="text-muted line-clamp-2 text-sm">{product.description}</p>
