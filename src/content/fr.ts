@@ -53,7 +53,49 @@ export const fr = {
     },
     configurator: {
       title: 'Configurateur 3D',
-      comingSoon: 'Le configurateur sera développé en Phase 4.',
+      intro: 'Choisissez un châssis, puis posez switches et keycaps touche par touche.',
+      steps: {
+        chassis: 'Châssis',
+        switches: 'Switches',
+        keycaps: 'Keycaps',
+        summary: 'Récapitulatif',
+      },
+      stepHelp: {
+        chassis: 'Le châssis est unique pour tout le clavier.',
+        switches: 'Sélectionnez un type, puis cliquez les touches à équiper.',
+        keycaps: 'Sélectionnez une couleur, puis cliquez les touches à habiller.',
+        summary: 'Vérifiez votre configuration avant de l’ajouter au panier.',
+      },
+      previous: 'Précédent',
+      next: 'Suivant',
+      fillAll: (name: string) => `Tout mettre en ${name}`,
+      clearHint: 'Maj + clic pour retirer une pièce.',
+      progress: (done: number, total: number) =>
+        `${done} / ${total} touches assignées (switch + keycap)`,
+      switchProgress: (done: number, total: number) => `${done} / ${total} switches posés`,
+      keycapProgress: (done: number, total: number) => `${done} / ${total} keycaps posées`,
+      perUnit: '/u',
+      views: {
+        label: 'Vue',
+        trois_quarts: '3/4',
+        dessus: 'Dessus',
+        face: 'Face',
+        gauche: 'Gauche',
+      },
+      reset: 'Tout réinitialiser',
+      summary: {
+        chassis: 'Châssis',
+        switches: 'Switches',
+        keycaps: 'Keycaps',
+        empty: 'Rien de posé pour l’instant.',
+        incomplete: (missing: number) =>
+          `${missing} position${missing > 1 ? 's' : ''} encore incomplète${missing > 1 ? 's' : ''}.`,
+        complete: 'Configuration complète.',
+        priceInPhase5: 'Le prix et l’ajout au panier arrivent en Phase 5.',
+      },
+      noWebgl:
+        'Votre navigateur ne prend pas en charge la 3D (WebGL). Essayez un navigateur récent pour utiliser le configurateur.',
+      loading: 'Chargement du configurateur…',
     },
     cart: {
       title: 'Panier',

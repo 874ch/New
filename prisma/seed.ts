@@ -292,8 +292,9 @@ async function main(): Promise<void> {
       name: 'Outemu Peach V3',
       slug: 'switch-outemu-peach-v3',
       unitPriceCents: 200,
+      swatchHex: '#F7B99C',
     },
-    update: { unitPriceCents: 200 },
+    update: { unitPriceCents: 200, swatchHex: '#F7B99C' },
   });
 
   await db.component.upsert({
@@ -304,8 +305,9 @@ async function main(): Promise<void> {
       name: 'KTT Kang White V3',
       slug: 'switch-ktt-kang-white-v3',
       unitPriceCents: 150,
+      swatchHex: '#F2F0EA',
     },
-    update: { unitPriceCents: 150 },
+    update: { unitPriceCents: 150, swatchHex: '#F2F0EA' },
   });
 
   await db.component.upsert({

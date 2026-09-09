@@ -729,7 +729,33 @@ prix en mars.
 
 ## 9. Pipeline des assets 3D
 
-### 9.1 Production des modèles
+### 9.0 Correction Phase 4 : géométrie procédurale, pas de GLB
+
+> **Le pipeline décrit en 9.1/9.2 n'a pas été appliqué, et ne devrait pas
+> l'être en l'état.** Deux constats faits au moment de coder la Phase 4 :
+>
+> 1. **`img2threejs` n'existe pas** — ni sur le registre npm (404), ni sous un
+>    nom approchant. La contrainte du brief était irréalisable telle quelle.
+> 2. Aucune référence visuelle ni aucun asset 3D n'a été fourni : il n'y avait
+>    de toute façon rien à convertir.
+>
+> Les pièces sont donc **générées en code** dans
+> `src/components/configurator/scene/geometry.ts` (keycap trapézoïdale par
+> largeur, boîtier et tige de switch, plaque et cadre du châssis). Pour un
+> clavier c'est le meilleur choix, pas un pis-aller : ce sont des formes
+> régulières, la géométrie pèse quelques kilo-octets décrits en TypeScript au
+> lieu d'un GLB à télécharger et décompresser, l'échelle reste exacte au
+> millimètre, et le rétrécissement des keycaps est appliqué en absolu — une
+> barre d'espace garde donc les mêmes flancs qu'une touche 1u.
+>
+> **Conséquence directe : Draco/Meshopt (§9.2) n'a plus d'objet** tant qu'il
+> n'y a pas de GLB, et la Phase 6 devra en tenir compte. Le reste du pipeline
+> (§9.3, instanciation) s'applique intégralement et a été implémenté.
+>
+> Passer à de vrais modèles plus tard ne toucherait que `geometry.ts` : les
+> `InstancedMesh` acceptent n'importe quelle `BufferGeometry`.
+
+### 9.1 Production des modèles (non appliqué, cf. §9.0)
 
 1. Références visuelles → **img2threejs** pour dériver les maillages de base
    (coque de châssis, profil de keycap, corps de switch).
@@ -933,7 +959,7 @@ l'absence de réponse.
 | 1     | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ✅ terminée             |
 | 2     | Design system, pages de contenu, catalogue  | Sonnet | ✅ terminée             |
 | 3     | Panier serveur, Stripe, commandes, admin    | Sonnet | ✅ terminée             |
-| 4     | Configurateur 3D, placement par touche      | Opus   | ⏸️ changement de modèle |
+| 4     | Configurateur 3D, placement par touche      | Opus   | ✅ terminée             |
 | 5     | Prix live, validation, connexion au panier  | Opus   |                         |
 | 6     | Optimisation assets 3D et performance       | Sonnet | ⏸️ changement de modèle |
 | 7     | QA, responsive, accessibilité, tactile      | Sonnet |                         |
