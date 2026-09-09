@@ -61,9 +61,7 @@ describe('cas de test canonique — 305 €', () => {
   it('détaille la nomenclature ligne par ligne', () => {
     const { lines } = computeBuildPrice(buildCanonique(), PRIX);
 
-    expect(
-      lines.map((l) => [l.sku, l.quantity, l.lineTotalCents] as const),
-    ).toStrictEqual([
+    expect(lines.map((l) => [l.sku, l.quantity, l.lineTotalCents] as const)).toStrictEqual([
       ['CHS-BLANC', 1, 11_000],
       ['SW-OUTEMU-PEACH-V3', 50, 10_000],
       ['SW-KTT-KANG-WHITE-V3', 30, 4_500],
@@ -157,9 +155,7 @@ describe('extras', () => {
 
 describe('garde-fous sur un build venu du client', () => {
   it('rejette un SKU absent du catalogue', () => {
-    const build = buildFromAssignments([
-      { switchSku: 'SW-GRATUIT-LOL', keycapSku: 'KC-BLANC' },
-    ]);
+    const build = buildFromAssignments([{ switchSku: 'SW-GRATUIT-LOL', keycapSku: 'KC-BLANC' }]);
     expect(() => computeBuildPrice(build, PRIX)).toThrow(UnknownSkuError);
   });
 
@@ -168,7 +164,7 @@ describe('garde-fous sur un build venu du client', () => {
     expect(() => computeBuildPrice(build, PRIX)).toThrow(WrongComponentKindError);
   });
 
-  it('rejette un châssis qui n\'en est pas un', () => {
+  it("rejette un châssis qui n'en est pas un", () => {
     expect(() => computeBuildPrice(buildFromAssignments([], 'KC-NOIR'), PRIX)).toThrow(
       WrongComponentKindError,
     );
@@ -181,7 +177,7 @@ describe('garde-fous sur un build venu du client', () => {
 });
 
 describe('déterminisme', () => {
-  it('produit le même détail quel que soit l\'ordre de saisie des touches', () => {
+  it("produit le même détail quel que soit l'ordre de saisie des touches", () => {
     const ordre = computeBuildPrice(buildCanonique(), PRIX);
 
     const inverse = buildFromAssignments([

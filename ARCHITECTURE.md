@@ -37,18 +37,18 @@ Cinq règles qui expliquent la plupart des décisions du document.
 
 ## 2. Stack
 
-| Domaine | Retenu | Écarté, et pourquoi |
-|---|---|---|
-| Framework | **Next.js 15+, App Router, TypeScript strict** | — (contrainte du brief) |
-| Style | **Tailwind CSS** + tokens CSS | — (contrainte du brief) |
-| 3D | **react-three-fiber + drei**, assets dérivés via **img2threejs** | — (contrainte du brief) |
-| Base | **PostgreSQL** (Neon ou Supabase) | SQLite : pas de concurrence sérieuse sur un flux de paiement. MongoDB : les commandes sont fortement relationnelles |
-| ORM | **Prisma** | Drizzle : plus proche du SQL mais typage des relations moins confortable pour la vue admin ; le brief recommande Prisma, on suit |
-| Paiement | **Stripe Checkout** (hébergé) | Payment Element : plus joli, mais SCA/3DS, Apple/Google Pay et PCI SAQ-A gratuits avec Checkout. Voir §6.3 |
-| État configurateur | **Zustand** + persistance `localStorage` | Redux : trop lourd ; Context React : re-render de tout l'arbre à chaque touche peinte, rédhibitoire ici |
-| Validation | **Zod** aux frontières d'API | — |
-| Tests | **Vitest** (unitaire), Playwright en Phase 7 | — |
-| Hébergement | **Vercel** + Postgres managé | — |
+| Domaine            | Retenu                                                           | Écarté, et pourquoi                                                                                                              |
+| ------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Framework          | **Next.js 15+, App Router, TypeScript strict**                   | — (contrainte du brief)                                                                                                          |
+| Style              | **Tailwind CSS** + tokens CSS                                    | — (contrainte du brief)                                                                                                          |
+| 3D                 | **react-three-fiber + drei**, assets dérivés via **img2threejs** | — (contrainte du brief)                                                                                                          |
+| Base               | **PostgreSQL** (Neon ou Supabase)                                | SQLite : pas de concurrence sérieuse sur un flux de paiement. MongoDB : les commandes sont fortement relationnelles              |
+| ORM                | **Prisma**                                                       | Drizzle : plus proche du SQL mais typage des relations moins confortable pour la vue admin ; le brief recommande Prisma, on suit |
+| Paiement           | **Stripe Checkout** (hébergé)                                    | Payment Element : plus joli, mais SCA/3DS, Apple/Google Pay et PCI SAQ-A gratuits avec Checkout. Voir §6.3                       |
+| État configurateur | **Zustand** + persistance `localStorage`                         | Redux : trop lourd ; Context React : re-render de tout l'arbre à chaque touche peinte, rédhibitoire ici                          |
+| Validation         | **Zod** aux frontières d'API                                     | —                                                                                                                                |
+| Tests              | **Vitest** (unitaire), Playwright en Phase 7                     | —                                                                                                                                |
+| Hébergement        | **Vercel** + Postgres managé                                     | —                                                                                                                                |
 
 **Prisma en serverless** : chaque lambda ouvre sa connexion. Il faut une chaîne
 **poolée** (PgBouncer / pooler Neon) dans `DATABASE_URL`, et la chaîne directe
@@ -115,17 +115,23 @@ Pas de compte client au lancement (paiement invité) — voir §13.
 ```jsonc
 {
   "label": "Clavier custom — Compact 80",
-  "layout":  { "slug": "compact-80", "name": "Compact 80", "keyCount": 80 },
+  "layout": { "slug": "compact-80", "name": "Compact 80", "keyCount": 80 },
   "chassis": { "sku": "CHS-BLANC", "name": "Châssis blanc", "unitPriceCents": 11000 },
   "bom": [
-    { "sku": "SW-OUTEMU-PEACH-V3", "name": "Outemu Peach V3", "unitPriceCents": 200, "quantity": 50, "lineTotalCents": 10000 }
+    {
+      "sku": "SW-OUTEMU-PEACH-V3",
+      "name": "Outemu Peach V3",
+      "unitPriceCents": 200,
+      "quantity": 50,
+      "lineTotalCents": 10000,
+    },
     // …
   ],
   "keys": {
-    "K01": { "switch": "SW-OUTEMU-PEACH-V3", "keycap": "KC-BLANC" }
+    "K01": { "switch": "SW-OUTEMU-PEACH-V3", "keycap": "KC-BLANC" },
     // … 80 entrées
   },
-  "totalCents": 30500
+  "totalCents": 30500,
 }
 ```
 
@@ -474,14 +480,14 @@ complétude est une validation séparée (§5), pas une condition de calcul.
 `src/lib/pricing/computeBuildPrice.test.ts` — 16 tests, dont le build de
 référence du brief :
 
-| Pièce | PU | Qté | Total |
-|---|---:|---:|---:|
-| Châssis blanc | 110,00 € | 1 | 110,00 € |
-| Outemu Peach V3 | 2,00 € | 50 | 100,00 € |
-| KTT Kang White V3 | 1,50 € | 30 | 45,00 € |
-| Keycap blanche | 0,70 € | 50 | 35,00 € |
-| Keycap noire | 0,50 € | 30 | 15,00 € |
-| | | | **305,00 €** |
+| Pièce             |       PU | Qté |        Total |
+| ----------------- | -------: | --: | -----------: |
+| Châssis blanc     | 110,00 € |   1 |     110,00 € |
+| Outemu Peach V3   |   2,00 € |  50 |     100,00 € |
+| KTT Kang White V3 |   1,50 € |  30 |      45,00 € |
+| Keycap blanche    |   0,70 € |  50 |      35,00 € |
+| Keycap noire      |   0,50 € |  30 |      15,00 € |
+|                   |          |     | **305,00 €** |
 
 ```sh
 npm test
@@ -495,11 +501,11 @@ sur `0,70 € × 50`, le chiffrage partiel, les extras, et les garde-fous du §4
 
 Le moteur lève une erreur typée plutôt que d'ignorer silencieusement :
 
-| Erreur | Cas |
-|---|---|
-| `UnknownSkuError` | SKU absent du catalogue — catalogue périmé côté client, ou tentative de fraude |
+| Erreur                    | Cas                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| `UnknownSkuError`         | SKU absent du catalogue — catalogue périmé côté client, ou tentative de fraude      |
 | `WrongComponentKindError` | pièce posée dans un mauvais emplacement (une keycap à 0,50 € déclarée comme switch) |
-| `InvalidQuantityError` | quantité d'extra non entière, nulle ou négative |
+| `InvalidQuantityError`    | quantité d'extra non entière, nulle ou négative                                     |
 
 Ignorer une pièce inconnue reviendrait à la facturer 0 €. Ces erreurs se
 traduisent en `400` à la frontière d'API, sans jamais atteindre Stripe.
@@ -526,9 +532,9 @@ l'API (Phase 3). Validé par Zod à l'entrée du serveur.
   "keys": {
     "K01": { "switchSku": "SW-OUTEMU-PEACH-V3", "keycapSku": "KC-BLANC" },
     "K02": { "switchSku": "SW-KTT-KANG-WHITE-V3", "keycapSku": "KC-NOIR" },
-    "K03": { "switchSku": null, "keycapSku": null }   // toléré en cours de config
+    "K03": { "switchSku": null, "keycapSku": null }, // toléré en cours de config
   },
-  "extras": [{ "sku": "CBL-USBC-TRESSE", "quantity": 1 }]
+  "extras": [{ "sku": "CBL-USBC-TRESSE", "quantity": 1 }],
 }
 ```
 
@@ -561,19 +567,19 @@ consommée par autre chose que le site.
 
 ### 6.2 Endpoints
 
-| Méthode | Route | Rôle |
-|---|---|---|
-| `GET` | `/api/catalog/components` | catalogue + prix unitaires (alimente la palette et le prix live) |
-| `GET` | `/api/catalog/layouts/[slug]` | layout + positions de touches |
-| `GET` | `/api/products`, `/api/products/[slug]` | claviers tout faits |
-| `POST` | `/api/builds` | valide + recalcule + persiste un build → `{ buildId, totalCents, lines }` |
-| `GET` | `/api/cart` | panier courant, prix relus du catalogue |
-| `POST` | `/api/cart/items` | ajout (variante ou build) |
-| `PATCH`/`DELETE` | `/api/cart/items/[id]` | quantité / suppression |
-| `POST` | `/api/checkout` | recalcul complet, création de la commande, session Stripe |
-| `POST` | `/api/webhooks/stripe` | confirmation de paiement (runtime Node, corps brut) |
-| `GET` | `/api/admin/orders`, `/api/admin/orders/[id]` | back-office (protégé) |
-| `PATCH` | `/api/admin/orders/[id]` | statut, numéro de suivi |
+| Méthode          | Route                                         | Rôle                                                                      |
+| ---------------- | --------------------------------------------- | ------------------------------------------------------------------------- |
+| `GET`            | `/api/catalog/components`                     | catalogue + prix unitaires (alimente la palette et le prix live)          |
+| `GET`            | `/api/catalog/layouts/[slug]`                 | layout + positions de touches                                             |
+| `GET`            | `/api/products`, `/api/products/[slug]`       | claviers tout faits                                                       |
+| `POST`           | `/api/builds`                                 | valide + recalcule + persiste un build → `{ buildId, totalCents, lines }` |
+| `GET`            | `/api/cart`                                   | panier courant, prix relus du catalogue                                   |
+| `POST`           | `/api/cart/items`                             | ajout (variante ou build)                                                 |
+| `PATCH`/`DELETE` | `/api/cart/items/[id]`                        | quantité / suppression                                                    |
+| `POST`           | `/api/checkout`                               | recalcul complet, création de la commande, session Stripe                 |
+| `POST`           | `/api/webhooks/stripe`                        | confirmation de paiement (runtime Node, corps brut)                       |
+| `GET`            | `/api/admin/orders`, `/api/admin/orders/[id]` | back-office (protégé)                                                     |
+| `PATCH`          | `/api/admin/orders/[id]`                      | statut, numéro de suivi                                                   |
 
 ### 6.3 Décision : Stripe Checkout plutôt que Payment Element
 
@@ -752,12 +758,12 @@ Textures ≤ 1024², compressées en KTX2. Environnement : une petite HDRI
 
 **Règle absolue : aucune touche n'est un objet React ni un `Mesh` individuel.**
 
-| Objet de scène | Type | Nombre | Draw calls |
-|---|---|---:|---:|
-| Châssis (coque, plaque, pieds) | `Mesh` | 2–3 | 2–3 |
-| Switches | `InstancedMesh` | 1 | 1 |
-| Keycaps | `InstancedMesh` **par classe de largeur** | ~8 | ~8 |
-| Cibles de clic invisibles | `InstancedMesh` | 1 | 1 |
+| Objet de scène                 | Type                                      | Nombre | Draw calls |
+| ------------------------------ | ----------------------------------------- | -----: | ---------: |
+| Châssis (coque, plaque, pieds) | `Mesh`                                    |    2–3 |        2–3 |
+| Switches                       | `InstancedMesh`                           |      1 |          1 |
+| Keycaps                        | `InstancedMesh` **par classe de largeur** |     ~8 |         ~8 |
+| Cibles de clic invisibles      | `InstancedMesh`                           |      1 |          1 |
 
 Total visé : **~15 draw calls** pour un clavier complet, contre ~170 avec une
 approche naïve.
@@ -810,11 +816,11 @@ ne raycaster que ce layer. À valider en Phase 4 selon le comportement exact de
 
 ### 9.5 Dégradation et repli
 
-| Contexte | Comportement |
-|---|---|
-| GPU correct | ombres douces, HDRI, `dpr` jusqu'à 2 |
-| GPU faible (détection au montage) | pas d'ombres, éclairage 3 points au lieu de l'HDRI, `dpr` plafonné à 1,25 |
-| WebGL indisponible | **vue de dessus 2D en SVG**, pleinement fonctionnelle : palette, peinture touche par touche, remplissage rapide, prix |
+| Contexte                          | Comportement                                                                                                          |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| GPU correct                       | ombres douces, HDRI, `dpr` jusqu'à 2                                                                                  |
+| GPU faible (détection au montage) | pas d'ombres, éclairage 3 points au lieu de l'HDRI, `dpr` plafonné à 1,25                                             |
+| WebGL indisponible                | **vue de dessus 2D en SVG**, pleinement fonctionnelle : palette, peinture touche par touche, remplissage rapide, prix |
 
 La vue 2D n'est pas un lot de consolation : c'est aussi la vue d'assistance
 tactile de la Phase 7. Elle est donc développée pour de bon, pas bâclée.
@@ -827,18 +833,18 @@ indicateur de progression.
 
 ## 10. Budget de performance
 
-| Cible | Seuil |
-|---|---|
-| JS initial hors configurateur | ≤ 150 Ko gzip |
-| LCP `/` et `/boutique` (4G, mobile milieu de gamme) | ≤ 2,0 s |
-| Three.js chargé ailleurs que sur `/configurateur` | **0 octet** (`next/dynamic`, `ssr: false`) |
-| Assets 3D d'une scène complète, compressés | ≤ 3 Mo |
-| Première image 3D interactive (desktop / mobile) | ≤ 2,0 s / ≤ 3,5 s |
-| Images par seconde (desktop / mobile) | 60 / ≥ 30 |
-| Draw calls, scène complète | ≤ 30 |
-| Triangles, scène complète | ≤ 400 000 |
-| Latence peinture d'une touche → retour visuel | ≤ 16 ms (aucune allocation dans la boucle) |
-| Lighthouse Performance (marketing / configurateur) | ≥ 90 / ≥ 75 |
+| Cible                                               | Seuil                                      |
+| --------------------------------------------------- | ------------------------------------------ |
+| JS initial hors configurateur                       | ≤ 150 Ko gzip                              |
+| LCP `/` et `/boutique` (4G, mobile milieu de gamme) | ≤ 2,0 s                                    |
+| Three.js chargé ailleurs que sur `/configurateur`   | **0 octet** (`next/dynamic`, `ssr: false`) |
+| Assets 3D d'une scène complète, compressés          | ≤ 3 Mo                                     |
+| Première image 3D interactive (desktop / mobile)    | ≤ 2,0 s / ≤ 3,5 s                          |
+| Images par seconde (desktop / mobile)               | 60 / ≥ 30                                  |
+| Draw calls, scène complète                          | ≤ 30                                       |
+| Triangles, scène complète                           | ≤ 400 000                                  |
+| Latence peinture d'une touche → retour visuel       | ≤ 16 ms (aucune allocation dans la boucle) |
+| Lighthouse Performance (marketing / configurateur)  | ≥ 90 / ≥ 75                                |
 
 Le seuil configurateur est volontairement plus bas : une page WebGL est
 pénalisée par des métriques pensées pour du document.
@@ -906,29 +912,29 @@ public/
 À trancher avant les phases indiquées. Le défaut proposé s'applique en
 l'absence de réponse.
 
-| # | Question | Défaut proposé | Bloque |
-|---|---|---|---|
-| 1 | **Frais de port** : fixes, offerts au-delà d'un montant, ou par transporteur ? Absent du brief. | forfait unique France, gratuit au-dessus de 150 € | Phase 3 |
-| 2 | **TVA** : entreprise assujettie ? Les prix du brief (110 €, 2 €…) sont-ils TTC ? | oui, prix TTC, TVA 20 % incluse | Phase 3 |
-| 3 | **Layout de lancement** : le cas canonique implique 80 positions. On part sur un unique layout « Compact 80 », ou plusieurs formats dès le début ? | un seul layout au lancement, modèle prévu pour plusieurs | Phase 1 (seed) |
-| 4 | **Comptes clients** : nécessaires, ou paiement invité suffisant ? | paiement invité, suivi de commande par lien signé | Phase 3 |
-| 5 | **Prix des claviers tout faits** (§4.7) : prix catalogue propre, ou somme des pièces ? | prix catalogue propre | Phase 2 |
-| 6 | **Anglais** : prévu à court terme ? Ajouter `[locale]` après coup impose de restructurer le routage. | FR uniquement, textes centralisés dans `src/content/fr.ts` pour rendre l'ajout mécanique | Phase 1 |
-| 7 | **E-mails transactionnels** : fournisseur ? | Resend | Phase 3 |
-| 8 | **Marque** : nom, logo, palette. | tokens neutres en attendant, remplaçables en un fichier | Phase 2 |
+| #   | Question                                                                                                                                           | Défaut proposé                                                                           | Bloque         |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------- |
+| 1   | **Frais de port** : fixes, offerts au-delà d'un montant, ou par transporteur ? Absent du brief.                                                    | forfait unique France, gratuit au-dessus de 150 €                                        | Phase 3        |
+| 2   | **TVA** : entreprise assujettie ? Les prix du brief (110 €, 2 €…) sont-ils TTC ?                                                                   | oui, prix TTC, TVA 20 % incluse                                                          | Phase 3        |
+| 3   | **Layout de lancement** : le cas canonique implique 80 positions. On part sur un unique layout « Compact 80 », ou plusieurs formats dès le début ? | un seul layout au lancement, modèle prévu pour plusieurs                                 | Phase 1 (seed) |
+| 4   | **Comptes clients** : nécessaires, ou paiement invité suffisant ?                                                                                  | paiement invité, suivi de commande par lien signé                                        | Phase 3        |
+| 5   | **Prix des claviers tout faits** (§4.7) : prix catalogue propre, ou somme des pièces ?                                                             | prix catalogue propre                                                                    | Phase 2        |
+| 6   | **Anglais** : prévu à court terme ? Ajouter `[locale]` après coup impose de restructurer le routage.                                               | FR uniquement, textes centralisés dans `src/content/fr.ts` pour rendre l'ajout mécanique | Phase 1        |
+| 7   | **E-mails transactionnels** : fournisseur ?                                                                                                        | Resend                                                                                   | Phase 3        |
+| 8   | **Marque** : nom, logo, palette.                                                                                                                   | tokens neutres en attendant, remplaçables en un fichier                                  | Phase 2        |
 
 ---
 
 ## 14. Phases et points d'arrêt
 
-| Phase | Contenu | Modèle | État |
-|---|---|---|---|
-| 0 | Architecture + moteur de prix + test 305 € | Opus | ✅ terminée |
-| 1 | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ⏸️ à venir |
-| 2 | Design system, pages de contenu, catalogue | Sonnet | |
-| 3 | Panier serveur, Stripe, commandes, admin | Sonnet | |
-| 4 | Configurateur 3D, placement par touche | Opus | ⏸️ changement de modèle |
-| 5 | Prix live, validation, connexion au panier | Opus | |
-| 6 | Optimisation assets 3D et performance | Sonnet | ⏸️ changement de modèle |
-| 7 | QA, responsive, accessibilité, tactile | Sonnet | |
-| 8 | Contenu, SEO, légal, mise en production | Sonnet | |
+| Phase | Contenu                                     | Modèle | État                    |
+| ----- | ------------------------------------------- | ------ | ----------------------- |
+| 0     | Architecture + moteur de prix + test 305 €  | Opus   | ✅ terminée             |
+| 1     | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ✅ terminée             |
+| 2     | Design system, pages de contenu, catalogue  | Sonnet |                         |
+| 3     | Panier serveur, Stripe, commandes, admin    | Sonnet |                         |
+| 4     | Configurateur 3D, placement par touche      | Opus   | ⏸️ changement de modèle |
+| 5     | Prix live, validation, connexion au panier  | Opus   |                         |
+| 6     | Optimisation assets 3D et performance       | Sonnet | ⏸️ changement de modèle |
+| 7     | QA, responsive, accessibilité, tactile      | Sonnet |                         |
+| 8     | Contenu, SEO, légal, mise en production     | Sonnet |                         |

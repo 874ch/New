@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+/**
+ * Tokens de design — PLACEHOLDERS.
+ *
+ * La marque n'est pas encore définie (cf. ARCHITECTURE.md §13 Q8) : cette
+ * palette neutre (graphite / papier + un accent cuivré, en écho aux
+ * claviers mécaniques) sert de base cohérente jusqu'à l'identité définitive.
+ * Remplacer les valeurs ci-dessous suffit à retexturer tout le site.
+ */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #fafaf9;
+  --color-foreground: #18181b;
+  --color-surface: #ffffff;
+  --color-border: #e4e4e7;
+  --color-muted: #71717a;
+  --color-accent: #b45309;
+  --color-accent-foreground: #fffbeb;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}

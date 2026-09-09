@@ -29,14 +29,14 @@ flottant, `70 * 50` vaut `3500`.
 
 Le build de référence :
 
-| Pièce | Prix unitaire | Quantité | Total |
-|---|---:|---:|---:|
-| Châssis blanc | 110,00 € | 1 | 110,00 € |
-| Switch Outemu Peach V3 | 2,00 € | 50 | 100,00 € |
-| Switch KTT Kang White V3 | 1,50 € | 30 | 45,00 € |
-| Keycap blanche | 0,70 € | 50 | 35,00 € |
-| Keycap noire | 0,50 € | 30 | 15,00 € |
-| | | | **305,00 €** |
+| Pièce                    | Prix unitaire | Quantité |        Total |
+| ------------------------ | ------------: | -------: | -----------: |
+| Châssis blanc            |      110,00 € |        1 |     110,00 € |
+| Switch Outemu Peach V3   |        2,00 € |       50 |     100,00 € |
+| Switch KTT Kang White V3 |        1,50 € |       30 |      45,00 € |
+| Keycap blanche           |        0,70 € |       50 |      35,00 € |
+| Keycap noire             |        0,50 € |       30 |      15,00 € |
+|                          |               |          | **305,00 €** |
 
 Le prix affiché pendant la configuration n'est qu'indicatif : le montant
 facturé est toujours recalculé côté serveur à partir du build complet et de la
