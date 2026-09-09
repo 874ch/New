@@ -12,8 +12,9 @@ import type { ConfiguratorCatalog } from '@/lib/configurator/types';
 
 export const CAMERA_VIEW_NAMES = ['trois_quarts', 'dessus', 'face', 'gauche'] as const;
 export type CameraView = (typeof CAMERA_VIEW_NAMES)[number];
+export const CAMERA_FOV_DEG = 32;
 
-/** Directions unitaires ; la distance vient de la largeur réelle du clavier. */
+/** Directions unitaires ; la distance est recalculée à l'intérieur du Canvas (cf. `frameDistance`). */
 const VIEW_DIRECTIONS: Record<CameraView, [number, number, number]> = {
   trois_quarts: [0, 0.5, 0.87],
   dessus: [0, 1, 0.001],
@@ -22,23 +23,21 @@ const VIEW_DIRECTIONS: Record<CameraView, [number, number, number]> = {
 };
 
 /**
- * Distance de cadrage : le clavier est très large, c'est lui qui contraint.
- * Le facteur tient compte du champ de vision et laisse une marge autour.
+ * Distance nécessaire pour que tout le clavier (largeur ET hauteur) tienne
+ * dans le cadre, quel que soit le ratio d'aspect du canvas.
+ *
+ * Sur un écran étroit et haut (mobile), l'ouverture horizontale effective
+ * d'une caméra perspective est *plus étroite* que son FOV vertical — un
+ * calcul basé uniquement sur la largeur du clavier (comme en Phase 4/6, où
+ * seul le desktop avait été vérifié) coupe le clavier en haut et en bas sur
+ * mobile. On calcule donc la distance requise pour la largeur ET la
+ * hauteur séparément, et on garde la plus contraignante des deux.
  */
-function frameDistance(totalWidthU: number): number {
-  return totalWidthU * 1.4;
-}
-
-export function getCameraViews(layoutWidthU: number): Record<CameraView, Vector3> {
-  const distance = frameDistance(layoutWidthU + 2 * CHASSIS_MARGIN);
-  const views = {} as Record<CameraView, Vector3>;
-
-  for (const name of CAMERA_VIEW_NAMES) {
-    const [x, y, z] = VIEW_DIRECTIONS[name];
-    views[name] = new Vector3(x, y, z).normalize().multiplyScalar(distance);
-  }
-
-  return views;
+function frameDistance(widthU: number, heightU: number, aspect: number, fovDeg: number): number {
+  const fovV = (fovDeg * Math.PI) / 180;
+  const distanceForHeight = heightU / 2 / Math.tan(fovV / 2);
+  const distanceForWidth = widthU / 2 / (Math.tan(fovV / 2) * aspect);
+  return Math.max(distanceForHeight, distanceForWidth) * 1.35;
 }
 
 /**
@@ -64,16 +63,35 @@ function StudioEnvironment() {
   return <primitive attach="environment" object={environment} />;
 }
 
-/** Amène la caméra vers l'angle demandé, sans à-coup. */
-function CameraRig({ view, views }: { view: CameraView; views: Record<CameraView, Vector3> }) {
+/**
+ * Amène la caméra vers l'angle demandé, sans à-coup, à une distance qui
+ * cadre tout le clavier pour le ratio d'aspect *actuel* du canvas (recalculé
+ * au resize — rotation d'écran mobile comprise).
+ */
+function CameraRig({
+  view,
+  widthU,
+  heightU,
+}: {
+  view: CameraView;
+  widthU: number;
+  heightU: number;
+}) {
   const camera = useThree((state) => state.camera);
-  const target = useRef(new Vector3().copy(views.trois_quarts));
+  const size = useThree((state) => state.size);
+  const target = useRef(new Vector3());
   const animating = useRef(false);
 
+  const distance = useMemo(
+    () => frameDistance(widthU, heightU, size.width / size.height, CAMERA_FOV_DEG),
+    [widthU, heightU, size.width, size.height],
+  );
+
   useEffect(() => {
-    target.current.copy(views[view]);
+    const [x, y, z] = VIEW_DIRECTIONS[view];
+    target.current.set(x, y, z).normalize().multiplyScalar(distance);
     animating.current = true;
-  }, [view, views]);
+  }, [view, distance]);
 
   useFrame((_, delta) => {
     if (!animating.current) return;
@@ -126,15 +144,22 @@ export function KeyboardScene({
   className?: string;
 }) {
   const [degraded, setDegraded] = useState(false);
-  const views = useMemo(() => getCameraViews(catalog.layout.widthU), [catalog.layout.widthU]);
-  const maxDistance = views.trois_quarts.length() * 1.8;
+  const widthU = catalog.layout.widthU + 2 * CHASSIS_MARGIN;
+  const heightU = catalog.layout.heightU + 2 * CHASSIS_MARGIN;
+  // Distance de secours pour le cadrage initial (avant que le Canvas ne
+  // connaisse sa propre taille) et pour les bornes de zoom : le pire cas
+  // plausible est un écran très étroit (aspect ~0.4, mobile en portrait).
+  const fallbackDistance = useMemo(
+    () => frameDistance(widthU, heightU, 0.4, CAMERA_FOV_DEG),
+    [widthU, heightU],
+  );
 
   return (
     <Canvas
       className={className}
       shadows={!degraded}
       dpr={degraded ? 1.25 : [1, 2]}
-      camera={{ position: views.trois_quarts.toArray(), fov: 32, far: 400 }}
+      camera={{ fov: CAMERA_FOV_DEG, far: 400, position: [0, fallbackDistance * 0.5, fallbackDistance * 0.87] }}
       gl={{ antialias: true, toneMapping: ACESFilmicToneMapping }}
       scene={{ environmentIntensity: 0.85 }}
     >
@@ -142,7 +167,7 @@ export function KeyboardScene({
 
       <AdaptivePerformance onFallback={() => setDegraded(true)} />
       <DebugStatsExporter />
-      <CameraRig view={view} views={views} />
+      <CameraRig view={view} widthU={widthU} heightU={heightU} />
 
       {degraded ? (
         // GPU faible : éclairage 3 points fixe, pas d'ombres ni d'environnement PBR
@@ -181,7 +206,7 @@ export function KeyboardScene({
         makeDefault
         enablePan={false}
         minDistance={8}
-        maxDistance={maxDistance}
+        maxDistance={fallbackDistance * 1.8}
         minPolarAngle={0.15}
         maxPolarAngle={Math.PI / 2.15}
         dampingFactor={0.12}

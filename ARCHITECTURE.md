@@ -923,6 +923,29 @@ draw calls et triangles mesurés (très en dessous du budget, donc la scène
 elle-même est légère). Le score Lighthouse configurateur doit être revérifié
 sur un déploiement réel (Phase 8) plutôt que pris tel quel ici.
 
+### 10.1 Audit accessibilité automatisé et compatibilité navigateurs — Phase 7
+
+**axe-core : 0 violation.** Scan des règles `wcag2a`, `wcag2aa`, `wcag21a`,
+`wcag21aa` et `best-practice` sur les 7 pages (`/`, `/boutique`,
+`/produit/compact-80`, `/panier`, `/configurateur`, `/admin/login`,
+`/commande/confirmation`) en desktop (1280×800) et mobile (375×812), plus le
+configurateur en vue de dessus 2D — soit 15 passes, 0 violation à chaque
+fois. Un scan automatisé ne couvre pas tout (pertinence des libellés, ordre
+de tabulation logique, qualité réelle de l'expérience clavier) : ces aspects
+ont été vérifiés manuellement en Phase 7 (§ tâches focus clavier, alternative
+ARIA du configurateur).
+
+**Cross-browser : limité à Chromium dans cet environnement.** Seul Chromium
+est disponible ici (navigateur préinstallé du bac à sable) ; Firefox et
+WebKit ne le sont pas et leur installation à la demande (`playwright
+install`) est explicitement exclue dans cet environnement. Le test
+cross-browser réel n'a donc pas pu être exécuté en Phase 7. Ce risque est
+mesuré plutôt qu'ignoré : le code n'utilise ni préfixe CSS propriétaire, ni
+API spécifique à un moteur (Tailwind v4 standard, WebGL via Three.js/r3f,
+`<Suspense>`/Server Actions Next.js) — aucun signal connu de rendu différent
+entre moteurs. À vérifier manuellement sur Firefox et Safari lors du
+déploiement réel (Phase 8), notamment le rendu WebGL du configurateur.
+
 ---
 
 ## 11. Arborescence
@@ -1010,5 +1033,5 @@ l'absence de réponse.
 | 4     | Configurateur 3D, placement par touche      | Opus   | ✅ terminée |
 | 5     | Prix live, validation, connexion au panier  | Opus   | ✅ terminée |
 | 6     | Optimisation assets 3D et performance       | Sonnet | ✅ terminée |
-| 7     | QA, responsive, accessibilité, tactile      | Sonnet |             |
+| 7     | QA, responsive, accessibilité, tactile      | Sonnet | ✅ terminée |
 | 8     | Contenu, SEO, légal, mise en production     | Sonnet |             |

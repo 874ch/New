@@ -68,7 +68,7 @@ function RenderModeToggle({
     <div
       role="group"
       aria-label={fr.pages.configurator.renderMode.label}
-      className="border-border bg-surface/90 absolute top-4 right-4 flex gap-1 rounded-md border p-1 backdrop-blur"
+      className="border-border bg-surface/90 absolute top-16 right-4 flex gap-1 rounded-md border p-1 backdrop-blur sm:top-4"
     >
       {modes.map((mode) => (
         <button
@@ -110,12 +110,15 @@ export function ConfiguratorClient({ catalog }: { catalog: ConfiguratorCatalog }
 
   return (
     <div className="grid lg:h-[calc(100vh-8.5rem)] lg:grid-cols-[1fr_22rem]">
-      <div className="bg-background relative h-[55vh] lg:h-full">
+      <div className="bg-background relative aspect-[4/3] max-h-[55vh] w-full lg:aspect-auto lg:h-full lg:max-h-none">
         {isReady && (
           <>
             {showScene ? (
               <>
-                <KeyboardScene catalog={catalog} view={cameraView} />
+                <p className="sr-only">{fr.pages.configurator.a11y.sceneHidden}</p>
+                <div aria-hidden="true" className="h-full w-full">
+                  <KeyboardScene catalog={catalog} view={cameraView} />
+                </div>
                 <ViewButtons value={cameraView} onChange={setCameraView} />
               </>
             ) : (

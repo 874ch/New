@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { fr } from '@/content/fr';
 import { type LoginState, loginAction } from '@/lib/auth/actions';
 
+const ERROR_ID = 'login-error';
+
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState<LoginState | undefined, FormData>(
     loginAction,
     undefined,
   );
+  const hasError = Boolean(state?.error);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -24,6 +27,8 @@ export function LoginForm() {
           type="email"
           autoComplete="username"
           required
+          aria-invalid={hasError}
+          aria-describedby={hasError ? ERROR_ID : undefined}
           className="border-border mt-1 w-full rounded-md border px-3 py-2 text-sm"
         />
       </div>
@@ -38,14 +43,20 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
+          aria-invalid={hasError}
+          aria-describedby={hasError ? ERROR_ID : undefined}
           className="border-border mt-1 w-full rounded-md border px-3 py-2 text-sm"
         />
       </div>
 
-      {state?.error && <p className="text-danger text-sm">{state.error}</p>}
+      {hasError && (
+        <p id={ERROR_ID} role="alert" className="text-danger text-sm">
+          {state?.error}
+        </p>
+      )}
 
       <Button type="submit" disabled={isPending} className="w-full">
-        {fr.pages.admin.login.submit}
+        {isPending ? '…' : fr.pages.admin.login.submit}
       </Button>
     </form>
   );

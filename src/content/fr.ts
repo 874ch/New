@@ -106,6 +106,10 @@ export const fr = {
         '3d': '3D',
         '2d': 'Vue de dessus',
       },
+      a11y: {
+        sceneHidden:
+          'Représentation 3D du clavier, non pilotable au clavier. Utilisez le bouton « Vue de dessus » ci-dessus pour configurer le clavier sans souris.',
+      },
     },
     cart: {
       title: 'Panier',
@@ -125,6 +129,30 @@ export const fr = {
       noSession: 'Aucune commande à afficher.',
       orderNumber: 'Commande',
       emailNotice: (email: string) => `Un e-mail de confirmation a été envoyé à ${email}.`,
+    },
+    errors: {
+      generic: {
+        title: 'Une erreur est survenue',
+        description: 'Quelque chose s’est mal passé de notre côté. Vous pouvez réessayer.',
+        retry: 'Réessayer',
+        backHome: 'Retour à l’accueil',
+      },
+      global: {
+        title: 'Le site a rencontré un problème',
+        description: 'Veuillez recharger la page. Si le problème persiste, revenez plus tard.',
+        retry: 'Recharger',
+      },
+      configurator: {
+        title: 'Le configurateur a rencontré un problème',
+        description:
+          'L’affichage 3D a échoué. Votre configuration n’est pas perdue — vous pouvez réessayer ou basculer sur la vue de dessus.',
+        retry: 'Réessayer',
+      },
+      notFound: {
+        title: 'Page introuvable',
+        description: 'Cette page n’existe pas ou plus.',
+        backHome: 'Retour à l’accueil',
+      },
     },
     admin: {
       title: 'Back-office',

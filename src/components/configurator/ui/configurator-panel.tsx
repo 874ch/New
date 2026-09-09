@@ -16,7 +16,18 @@ import type { ComponentOption, ConfiguratorCatalog } from '@/lib/configurator/ty
 import { computeBuildPrice } from '@/lib/pricing';
 import type { PriceBreakdown } from '@/lib/pricing';
 
-function ProgressBar({ done, total, label }: { done: number; total: number; label: string }) {
+function ProgressBar({
+  done,
+  total,
+  label,
+  live = false,
+}: {
+  done: number;
+  total: number;
+  label: string;
+  /** Annonce les changements aux lecteurs d'écran sans que l'utilisateur navigue jusqu'ici. */
+  live?: boolean;
+}) {
   const ratio = total === 0 ? 0 : done / total;
   return (
     <div>
@@ -31,6 +42,8 @@ function ProgressBar({ done, total, label }: { done: number; total: number; labe
         aria-valuemin={0}
         aria-valuemax={total}
         aria-label={label}
+        aria-live={live ? 'polite' : undefined}
+        aria-atomic={live ? true : undefined}
       >
         <div
           className="bg-accent h-full rounded-full transition-[width] duration-200"
@@ -297,6 +310,7 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
           done={completeness.complete}
           total={totalKeys}
           label={fr.pages.configurator.progress(completeness.complete, totalKeys)}
+          live
         />
 
         <div className="flex gap-2">
