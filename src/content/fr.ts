@@ -22,13 +22,31 @@ export const fr = {
         'Un catalogue de claviers mécaniques prêts à l’emploi, et un configurateur 3D pour choisir chaque switch et chaque keycap, touche par touche.',
       ctaShop: 'Voir le catalogue',
       ctaConfigurator: 'Ouvrir le configurateur',
+      featured: 'En vedette',
+      featureShop: {
+        title: 'Catalogue',
+        description: 'Des claviers déjà assemblés, prêts à commander.',
+        cta: 'Voir la boutique',
+      },
+      featureConfigurator: {
+        title: 'Configurateur 3D',
+        description: 'Choisissez chaque switch et chaque keycap, touche par touche.',
+        cta: 'Ouvrir le configurateur',
+      },
     },
     shop: {
       title: 'Boutique',
-      empty: 'Le catalogue sera mis en ligne à la Phase 2.',
+      empty: 'Aucun clavier disponible pour le moment.',
+      fromPrice: 'À partir de',
+      limitedStock: 'Stock limité',
+      variantsCount: (n: number) => `${n} variantes`,
     },
     product: {
       backToShop: 'Retour à la boutique',
+      unavailable: 'Actuellement indisponible.',
+      variantLabel: 'Variante',
+      addToCart: 'Ajouter au panier',
+      cartComingSoon: 'Le panier sera activé en Phase 3.',
     },
     configurator: {
       title: 'Configurateur 3D',

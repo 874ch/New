@@ -345,8 +345,81 @@ async function main(): Promise<void> {
     update: { unitPriceCents: 2_500 },
   });
 
+  // Catalogue « tout fait » (Phase 2) : chaque variante porte un `buildTemplate`
+  // au format du moteur de prix (src/lib/pricing/types.ts), pour que l'admin
+  // puisse fabriquer une commande standard exactement comme un build custom.
+  const keyCodes = keys.map((k) => k.code);
+
+  const uniformBuildTemplate = (chassisSku: string, switchSku: string, keycapSku: string) => ({
+    version: 1,
+    layoutSlug: 'compact-80',
+    chassisSku,
+    keys: Object.fromEntries(keyCodes.map((code) => [code, { switchSku, keycapSku }])),
+  });
+
+  // Reprend exactement le mix du cas de test canonique (305 €, cf. ARCHITECTURE.md §4.5).
+  const signatureBuildTemplate = (chassisSku: string) => ({
+    version: 1,
+    layoutSlug: 'compact-80',
+    chassisSku,
+    keys: Object.fromEntries(
+      keyCodes.map((code, index) => [
+        code,
+        index < 50
+          ? { switchSku: 'SW-OUTEMU-PEACH-V3', keycapSku: 'KC-BLANC' }
+          : { switchSku: 'SW-KTT-KANG-WHITE-V3', keycapSku: 'KC-NOIR' },
+      ]),
+    ),
+  });
+
+  const compact80Product = await db.product.upsert({
+    where: { slug: 'compact-80' },
+    create: {
+      slug: 'compact-80',
+      name: 'Clavier Compact 80',
+      description:
+        'Le Compact 80 assemblé et réglé pour vous : châssis, switches et keycaps déjà choisis. Envie de composer votre propre mix, touche par touche ? Direction le configurateur.',
+      images: [],
+      sortOrder: 0,
+    },
+    update: {},
+  });
+
+  const standardVariants = [
+    {
+      sku: 'STD-C80-BLANC-PEACH',
+      name: 'Blanc — Outemu Peach V3',
+      unitPriceCents: 24_900,
+      stockQty: 12,
+      buildTemplate: uniformBuildTemplate('CHS-BLANC', 'SW-OUTEMU-PEACH-V3', 'KC-BLANC'),
+    },
+    {
+      sku: 'STD-C80-NOIR-KANG',
+      name: 'Noir — KTT Kang White V3',
+      unitPriceCents: 23_900,
+      stockQty: 9,
+      buildTemplate: uniformBuildTemplate('CHS-NOIR', 'SW-KTT-KANG-WHITE-V3', 'KC-NOIR'),
+    },
+    {
+      sku: 'STD-C80-SIGNATURE',
+      name: 'Bicolore Signature',
+      unitPriceCents: 30_500,
+      stockQty: 5,
+      buildTemplate: signatureBuildTemplate('CHS-BLANC'),
+    },
+  ] as const;
+
+  for (const variant of standardVariants) {
+    await db.productVariant.upsert({
+      where: { sku: variant.sku },
+      create: { productId: compact80Product.id, ...variant },
+      update: { ...variant, productId: compact80Product.id },
+    });
+  }
+
   console.log(
-    `Seed OK — layout « ${layout.name} » (${keys.length} touches) + 7 pièces au catalogue.`,
+    `Seed OK — layout « ${layout.name} » (${keys.length} touches), 7 pièces au catalogue, ` +
+      `1 produit tout fait (${standardVariants.length} variantes).`,
   );
 }
 

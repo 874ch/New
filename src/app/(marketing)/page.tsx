@@ -1,30 +1,68 @@
 import Link from 'next/link';
 
+import { ProductCard } from '@/components/shop/product-card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Container } from '@/components/ui/container';
 import { fr } from '@/content/fr';
+import { db } from '@/lib/db';
 
-export default function HomePage() {
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const featured = await db.product.findFirst({
+    where: { active: true, variants: { some: { active: true } } },
+    orderBy: { sortOrder: 'asc' },
+    include: {
+      variants: {
+        where: { active: true },
+        select: { unitPriceCents: true, stockQty: true },
+      },
+    },
+  });
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-24">
-      <p className="text-accent text-sm font-medium">{fr.site.tagline}</p>
-      <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
-        {fr.pages.home.title}
-      </h1>
-      <p className="text-muted mt-4 max-w-xl">{fr.pages.home.subtitle}</p>
+    <>
+      <Container className="py-24">
+        <p className="text-accent text-sm font-medium">{fr.site.tagline}</p>
+        <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
+          {fr.pages.home.title}
+        </h1>
+        <p className="text-muted mt-4 max-w-xl">{fr.pages.home.subtitle}</p>
 
-      <div className="mt-8 flex gap-4">
-        <Link
-          href="/boutique"
-          className="bg-foreground text-background rounded-md px-5 py-2.5 text-sm font-medium"
-        >
-          {fr.pages.home.ctaShop}
-        </Link>
-        <Link
-          href="/configurateur"
-          className="border-border hover:border-accent hover:text-accent rounded-md border px-5 py-2.5 text-sm font-medium"
-        >
-          {fr.pages.home.ctaConfigurator}
-        </Link>
-      </div>
-    </section>
+        <div className="mt-8 flex gap-4">
+          <Button href="/boutique">{fr.pages.home.ctaShop}</Button>
+          <Button href="/configurateur" variant="outline">
+            {fr.pages.home.ctaConfigurator}
+          </Button>
+        </div>
+      </Container>
+
+      <Container className="grid gap-6 pb-24 sm:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="font-medium">{fr.pages.home.featureShop.title}</h2>
+          <p className="text-muted mt-2 text-sm">{fr.pages.home.featureShop.description}</p>
+          <Link href="/boutique" className="text-accent mt-4 inline-block text-sm">
+            {fr.pages.home.featureShop.cta} →
+          </Link>
+        </Card>
+        <Card className="p-6">
+          <h2 className="font-medium">{fr.pages.home.featureConfigurator.title}</h2>
+          <p className="text-muted mt-2 text-sm">{fr.pages.home.featureConfigurator.description}</p>
+          <Link href="/configurateur" className="text-accent mt-4 inline-block text-sm">
+            {fr.pages.home.featureConfigurator.cta} →
+          </Link>
+        </Card>
+      </Container>
+
+      {featured && (
+        <Container className="pb-24">
+          <h2 className="text-lg font-medium">{fr.pages.home.featured}</h2>
+          <div className="mt-4 max-w-sm">
+            <ProductCard product={featured} />
+          </div>
+        </Container>
+      )}
+    </>
   );
 }
