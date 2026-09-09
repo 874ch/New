@@ -2,13 +2,15 @@
 
 import { redirect } from 'next/navigation';
 
-import { cartItemLabel, cartItemUnitPriceCents, getCart } from '@/lib/cart';
+import { getCart } from '@/lib/cart';
+import { priceCartLines } from '@/lib/cart-pricing';
 import { getStripeClient, siteUrl } from '@/lib/stripe';
 
 /**
- * Crée la session Stripe Checkout à partir du panier en base — jamais à
- * partir d'un total envoyé par le client — puis redirige vers la page de
- * paiement hébergée par Stripe.
+ * Crée la session Stripe Checkout à partir du panier en base — chaque ligne
+ * étant rechiffrée depuis le catalogue au moment du paiement, jamais depuis
+ * un total transmis par le client — puis redirige vers la page de paiement
+ * hébergée par Stripe.
  */
 export async function createCheckoutSessionAction(): Promise<void> {
   const cart = await getCart();
@@ -17,12 +19,14 @@ export async function createCheckoutSessionAction(): Promise<void> {
     redirect('/panier');
   }
 
-  const lineItems = cart.items.map((item) => ({
-    quantity: item.quantity,
+  const lines = await priceCartLines(cart.items);
+
+  const lineItems = lines.map((line) => ({
+    quantity: line.quantity,
     price_data: {
       currency: 'eur',
-      unit_amount: cartItemUnitPriceCents(item),
-      product_data: { name: cartItemLabel(item) },
+      unit_amount: line.unitPriceCents,
+      product_data: { name: line.label },
     },
   }));
 

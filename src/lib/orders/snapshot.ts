@@ -1,3 +1,4 @@
+import type { AssemblyPlan } from '@/lib/cart-pricing';
 import type { PriceLine } from '@/lib/pricing';
 
 /**
@@ -9,6 +10,9 @@ export interface OrderItemSnapshot {
   kind: 'STANDARD' | 'CUSTOM_BUILD';
   label: string;
   sku: string;
-  /** Nomenclature de fabrication (switch/keycap par position), si applicable. */
+  /** Nomenclature agrégée, pour commander les pièces. */
   bom?: readonly PriceLine[];
+  /** Plan de montage position par position, pour assembler. */
+  assemblyPlan?: AssemblyPlan;
+  layoutName?: string;
 }

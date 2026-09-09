@@ -1,38 +1,9 @@
 'use server';
 
-import { randomUUID } from 'node:crypto';
-
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
 
-import { CART_COOKIE, CART_TTL_DAYS, getCart } from '@/lib/cart';
+import { getCart, getOrCreateCartId } from '@/lib/cart';
 import { db } from '@/lib/db';
-
-async function getOrCreateCartId(): Promise<string> {
-  const store = await cookies();
-  const token = store.get(CART_COOKIE)?.value;
-
-  if (token) {
-    const existing = await db.cart.findUnique({ where: { token } });
-    if (existing && existing.expiresAt > new Date()) {
-      return existing.id;
-    }
-  }
-
-  const newToken = randomUUID();
-  const expiresAt = new Date(Date.now() + CART_TTL_DAYS * 24 * 60 * 60 * 1000);
-  const cart = await db.cart.create({ data: { token: newToken, expiresAt } });
-
-  store.set(CART_COOKIE, newToken, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    expires: expiresAt,
-    path: '/',
-  });
-
-  return cart.id;
-}
 
 export async function addStandardVariantToCart(variantSku: string, quantity = 1): Promise<void> {
   if (!Number.isInteger(quantity) || quantity <= 0) {

@@ -116,6 +116,44 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderPagePro
                   </ul>
                 </div>
               )}
+
+              {snapshot.assemblyPlan && Object.keys(snapshot.assemblyPlan).length > 0 && (
+                <details className="mt-4">
+                  <summary className="text-muted cursor-pointer text-xs font-medium tracking-wide uppercase">
+                    {fr.pages.admin.orders.assemblyPlan}
+                    {snapshot.layoutName ? ` — ${snapshot.layoutName}` : ''} (
+                    {fr.pages.admin.orders.assemblyCount(Object.keys(snapshot.assemblyPlan).length)}
+                    )
+                  </summary>
+
+                  <table className="mt-3 w-full text-left text-xs">
+                    <thead>
+                      <tr className="text-muted border-border border-b">
+                        <th className="py-1 pr-3 font-medium">
+                          {fr.pages.admin.orders.assemblyColumns.position}
+                        </th>
+                        <th className="py-1 pr-3 font-medium">
+                          {fr.pages.admin.orders.assemblyColumns.switch}
+                        </th>
+                        <th className="py-1 font-medium">
+                          {fr.pages.admin.orders.assemblyColumns.keycap}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(snapshot.assemblyPlan)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([code, pieces]) => (
+                          <tr key={code} className="border-border/60 border-b last:border-0">
+                            <td className="py-1 pr-3 font-mono">{code}</td>
+                            <td className="py-1 pr-3">{pieces.switch}</td>
+                            <td className="py-1">{pieces.keycap}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </details>
+              )}
             </div>
           );
         })}

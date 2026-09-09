@@ -960,7 +960,7 @@ l'absence de réponse.
 | 2     | Design system, pages de contenu, catalogue  | Sonnet | ✅ terminée             |
 | 3     | Panier serveur, Stripe, commandes, admin    | Sonnet | ✅ terminée             |
 | 4     | Configurateur 3D, placement par touche      | Opus   | ✅ terminée             |
-| 5     | Prix live, validation, connexion au panier  | Opus   |                         |
+| 5     | Prix live, validation, connexion au panier  | Opus   | ✅ terminée             |
 | 6     | Optimisation assets 3D et performance       | Sonnet | ⏸️ changement de modèle |
 | 7     | QA, responsive, accessibilité, tactile      | Sonnet |                         |
 | 8     | Contenu, SEO, légal, mise en production     | Sonnet |                         |

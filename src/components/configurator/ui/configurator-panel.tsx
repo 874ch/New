@@ -1,14 +1,20 @@
 'use client';
 
-import { useMemo } from 'react';
+import Link from 'next/link';
+import { useMemo, useState, useTransition } from 'react';
 
 import { Palette } from '@/components/configurator/ui/palette';
 import { StepNav } from '@/components/configurator/ui/step-nav';
 import { Button } from '@/components/ui/button';
+import { Price } from '@/components/ui/price';
 import { fr } from '@/content/fr';
+import { addCustomBuildToCart } from '@/lib/configurator/actions';
+import { catalogPriceTable, checkCompleteness, makeBuild } from '@/lib/configurator/pricing';
 import { useConfiguratorStore } from '@/lib/configurator/store';
 import { CONFIGURATOR_STEPS } from '@/lib/configurator/types';
 import type { ComponentOption, ConfiguratorCatalog } from '@/lib/configurator/types';
+import { computeBuildPrice } from '@/lib/pricing';
+import type { PriceBreakdown } from '@/lib/pricing';
 
 function ProgressBar({ done, total, label }: { done: number; total: number; label: string }) {
   const ratio = total === 0 ? 0 : done / total;
@@ -82,12 +88,47 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
   const fillAll = useConfiguratorStore((state) => state.fillAll);
   const reset = useConfiguratorStore((state) => state.reset);
 
+  const keyCodes = useConfiguratorStore((state) => state.keyCodes);
+  const [addState, setAddState] = useState<'idle' | 'added' | 'error'>('idle');
+  const [addError, setAddError] = useState<string | null>(null);
+  const [isAdding, startAdding] = useTransition();
+
   const totalKeys = catalog.layout.keyCount;
+  const priceTable = useMemo(() => catalogPriceTable(catalog), [catalog]);
+
+  /** Prix recalculé à chaque pose : même moteur que le serveur, mêmes prix. */
+  const breakdown: PriceBreakdown | null = useMemo(() => {
+    if (!chassisSku) return null;
+    try {
+      return computeBuildPrice(makeBuild(catalog.layout.slug, chassisSku, keys), priceTable);
+    } catch {
+      return null;
+    }
+  }, [catalog.layout.slug, chassisSku, keys, priceTable]);
+
+  const completeness = useMemo(() => checkCompleteness(keyCodes, keys), [keyCodes, keys]);
+
+  const handleAddToCart = () => {
+    const build = useConfiguratorStore.getState().toBuild();
+    if (!build) return;
+
+    setAddState('idle');
+    setAddError(null);
+
+    startAdding(async () => {
+      const result = await addCustomBuildToCart(build);
+      if (result.ok) {
+        setAddState('added');
+      } else {
+        setAddState('error');
+        setAddError(result.error);
+      }
+    });
+  };
 
   const tally = useMemo(() => {
     const switches = new Map<string, number>();
     const keycaps = new Map<string, number>();
-    let complete = 0;
 
     for (const assignment of Object.values(keys)) {
       if (assignment.switchSku) {
@@ -96,12 +137,11 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
       if (assignment.keycapSku) {
         keycaps.set(assignment.keycapSku, (keycaps.get(assignment.keycapSku) ?? 0) + 1);
       }
-      if (assignment.switchSku && assignment.keycapSku) complete += 1;
     }
 
     const switchCount = [...switches.values()].reduce((sum, n) => sum + n, 0);
     const keycapCount = [...keycaps.values()].reduce((sum, n) => sum + n, 0);
-    return { switches, keycaps, complete, switchCount, keycapCount };
+    return { switches, keycaps, switchCount, keycapCount };
   }, [keys]);
 
   const stepIndex = CONFIGURATOR_STEPS.indexOf(step);
@@ -191,20 +231,72 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
             options={catalog.keycaps}
           />
 
-          <p className={tally.complete === totalKeys ? 'text-sm' : 'text-danger text-sm'}>
-            {tally.complete === totalKeys
+          {breakdown && (
+            <div>
+              <h3 className="text-muted text-xs font-medium tracking-wide uppercase">
+                {fr.pages.configurator.summary.detail}
+              </h3>
+              <ul className="mt-2 space-y-1 text-sm">
+                {breakdown.lines.map((line) => (
+                  <li key={line.sku} className="flex justify-between gap-2">
+                    <span className="text-muted">
+                      {line.quantity}× {line.name}
+                    </span>
+                    <Price cents={line.lineTotalCents} className="tabular-nums" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p className={completeness.isComplete ? 'text-sm' : 'text-danger text-sm'}>
+            {completeness.isComplete
               ? fr.pages.configurator.summary.complete
-              : fr.pages.configurator.summary.incomplete(totalKeys - tally.complete)}
+              : fr.pages.configurator.summary.incomplete(
+                  completeness.total - completeness.complete,
+                )}
           </p>
-          <p className="text-muted text-xs">{fr.pages.configurator.summary.priceInPhase5}</p>
+
+          <div>
+            <Button
+              className="w-full"
+              onClick={handleAddToCart}
+              disabled={!completeness.isComplete || isAdding}
+            >
+              {isAdding ? fr.pages.configurator.adding : fr.pages.configurator.addToCart}
+            </Button>
+
+            {!completeness.isComplete && (
+              <p className="text-muted mt-2 text-xs">{fr.pages.configurator.blockedIncomplete}</p>
+            )}
+            {addState === 'added' && (
+              <p className="mt-2 text-sm">
+                {fr.pages.configurator.added}{' '}
+                <Link href="/panier" className="text-accent">
+                  {fr.pages.configurator.viewCart}
+                </Link>
+              </p>
+            )}
+            {addState === 'error' && <p className="text-danger mt-2 text-sm">{addError}</p>}
+          </div>
         </div>
       )}
 
       <div className="mt-auto space-y-3">
+        {breakdown && (
+          <div className="border-border border-t pt-3">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-medium">{fr.pages.configurator.total}</span>
+              <Price cents={breakdown.totalCents} className="text-xl font-semibold tabular-nums" />
+            </div>
+            <p className="text-muted mt-1 text-[11px]">{fr.pages.configurator.liveNotice}</p>
+          </div>
+        )}
+
         <ProgressBar
-          done={tally.complete}
+          done={completeness.complete}
           total={totalKeys}
-          label={fr.pages.configurator.progress(tally.complete, totalKeys)}
+          label={fr.pages.configurator.progress(completeness.complete, totalKeys)}
         />
 
         <div className="flex gap-2">

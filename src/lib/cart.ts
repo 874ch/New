@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { cookies } from 'next/headers';
 
 import { db } from '@/lib/db';
@@ -41,24 +43,48 @@ export async function getCart() {
   return cart;
 }
 
+/**
+ * Retourne le panier courant, en le créant au besoin.
+ * Pose un cookie : à n'appeler que depuis une Server Action ou un Route
+ * Handler, les Server Components ne peuvent pas écrire de cookie.
+ */
+export async function getOrCreateCartId(): Promise<string> {
+  const store = await cookies();
+  const token = store.get(CART_COOKIE)?.value;
+
+  if (token) {
+    const existing = await db.cart.findUnique({ where: { token } });
+    if (existing && existing.expiresAt > new Date()) {
+      return existing.id;
+    }
+  }
+
+  const newToken = randomUUID();
+  const expiresAt = new Date(Date.now() + CART_TTL_DAYS * 24 * 60 * 60 * 1000);
+  const cart = await db.cart.create({ data: { token: newToken, expiresAt } });
+
+  store.set(CART_COOKIE, newToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    expires: expiresAt,
+    path: '/',
+  });
+
+  return cart.id;
+}
+
 export type CartWithItems = NonNullable<Awaited<ReturnType<typeof getCart>>>;
 export type CartItemWithRelations = CartWithItems['items'][number];
 
-/** Prix unitaire d'une ligne de panier, quelle que soit sa nature. */
-export function cartItemUnitPriceCents(item: CartItemWithRelations): number {
-  return item.kind === 'STANDARD'
-    ? (item.variant?.unitPriceCents ?? 0)
-    : (item.build?.totalCents ?? 0);
-}
-
-/** Libellé d'affichage d'une ligne de panier. */
+/**
+ * Libellé d'affichage d'une ligne de panier.
+ * Le prix, lui, n'est jamais lu ici : il est rechiffré depuis le catalogue
+ * par `priceCartLines` (cf. src/lib/cart-pricing.ts).
+ */
 export function cartItemLabel(item: CartItemWithRelations): string {
   if (item.kind === 'STANDARD' && item.variant) {
     return `${item.variant.product.name} — ${item.variant.name}`;
   }
-  return 'Configuration personnalisée';
-}
-
-export function cartTotalCents(cart: Pick<CartWithItems, 'items'>): number {
-  return cart.items.reduce((sum, item) => sum + cartItemUnitPriceCents(item) * item.quantity, 0);
+  return 'Clavier configuré sur mesure';
 }

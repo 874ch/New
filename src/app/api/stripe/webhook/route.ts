@@ -3,11 +3,10 @@ import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
-import { cartInclude, cartItemLabel, cartItemUnitPriceCents } from '@/lib/cart';
+import { cartInclude } from '@/lib/cart';
+import { priceCartLines } from '@/lib/cart-pricing';
 import { db } from '@/lib/db';
 import type { OrderItemSnapshot } from '@/lib/orders/snapshot';
-import { computeBuildPrice, toPriceTable } from '@/lib/pricing';
-import type { Build } from '@/lib/pricing';
 import { getStripeClient, requireStripeWebhookSecret } from '@/lib/stripe';
 import type { Prisma } from '@/generated/prisma/client';
 
@@ -29,21 +28,6 @@ function generateOrderNumber(): string {
   return `CMD-${date}-${suffix}`;
 }
 
-/** Best-effort : une nomenclature illisible ne doit jamais faire échouer la commande. */
-async function computeBomSafely(buildTemplate: unknown): Promise<OrderItemSnapshot['bom']> {
-  if (!buildTemplate) {
-    return undefined;
-  }
-  try {
-    const components = await db.component.findMany({ where: { active: true } });
-    const priceTable = toPriceTable(components);
-    return computeBuildPrice(buildTemplate as Build, priceTable).lines;
-  } catch (error) {
-    console.error('Nomenclature illisible pour un buildTemplate', error);
-    return undefined;
-  }
-}
-
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
   eventId: string,
@@ -61,27 +45,32 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  const orderItemsData = await Promise.all(
-    cart.items.map(async (item) => {
-      const unitPriceCents = cartItemUnitPriceCents(item);
-      const snapshot: OrderItemSnapshot = {
-        kind: item.kind,
-        label: cartItemLabel(item),
-        sku: item.variant?.sku ?? item.buildId ?? 'N/A',
-        bom: await computeBomSafely(item.variant?.buildTemplate ?? null),
-      };
+  // Chiffrage serveur au moment de la commande, comme à la création de la
+  // session : le montant enregistré ne vient jamais du client.
+  const itemById = new Map(cart.items.map((item) => [item.id, item]));
+  const pricedLines = await priceCartLines(cart.items);
 
-      return {
-        kind: item.kind,
-        quantity: item.quantity,
-        unitPriceCents,
-        lineTotalCents: unitPriceCents * item.quantity,
-        variantId: item.variantId,
-        buildId: item.buildId,
-        snapshot: toJson(snapshot),
-      };
-    }),
-  );
+  const orderItemsData = pricedLines.map((line) => {
+    const item = itemById.get(line.itemId);
+    const snapshot: OrderItemSnapshot = {
+      kind: item?.kind ?? 'STANDARD',
+      label: line.label,
+      sku: item?.variant?.sku ?? item?.buildId ?? 'N/A',
+      bom: line.bom,
+      assemblyPlan: line.assemblyPlan,
+      layoutName: line.layoutName,
+    };
+
+    return {
+      kind: item?.kind ?? 'STANDARD',
+      quantity: line.quantity,
+      unitPriceCents: line.unitPriceCents,
+      lineTotalCents: line.lineTotalCents,
+      variantId: item?.variantId ?? null,
+      buildId: item?.buildId ?? null,
+      snapshot: toJson(snapshot),
+    };
+  });
 
   const subtotalCents = orderItemsData.reduce((sum, item) => sum + item.lineTotalCents, 0);
   const shippingCents = 0;
