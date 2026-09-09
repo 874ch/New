@@ -1,5 +1,6 @@
 import 'dotenv/config';
 
+import { hashPassword } from '../src/lib/auth/password';
 import { db } from '../src/lib/db';
 
 /**
@@ -417,9 +418,23 @@ async function main(): Promise<void> {
     });
   }
 
+  // Bootstrap du premier compte admin — pas d'inscription publique pour le
+  // back-office. N'agit que si les deux variables sont renseignées, pour ne
+  // jamais committer un mot de passe en dur.
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    await db.adminUser.upsert({
+      where: { email: adminEmail },
+      create: { email: adminEmail, passwordHash: hashPassword(adminPassword) },
+      update: {},
+    });
+  }
+
   console.log(
     `Seed OK — layout « ${layout.name} » (${keys.length} touches), 7 pièces au catalogue, ` +
-      `1 produit tout fait (${standardVariants.length} variantes).`,
+      `1 produit tout fait (${standardVariants.length} variantes)` +
+      `${adminEmail && adminPassword ? `, compte admin « ${adminEmail} »` : ''}.`,
   );
 }
 

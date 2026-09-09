@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useState, useTransition } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Price } from '@/components/ui/price';
 import { fr } from '@/content/fr';
+import { addStandardVariantToCart } from '@/lib/cart-actions';
 import { cx } from '@/lib/cx';
 
 export interface VariantOption {
@@ -14,13 +16,29 @@ export interface VariantOption {
   stockQty: number | null;
 }
 
+type AddState = 'idle' | 'added' | 'error';
+
 export function VariantPicker({ variants }: { variants: readonly VariantOption[] }) {
   const [selectedSku, setSelectedSku] = useState(variants[0]?.sku);
+  const [addState, setAddState] = useState<AddState>('idle');
+  const [isPending, startTransition] = useTransition();
   const selected = variants.find((v) => v.sku === selectedSku);
 
   if (!selected) {
     return null;
   }
+
+  const handleAddToCart = () => {
+    const sku = selected.sku;
+    startTransition(async () => {
+      try {
+        await addStandardVariantToCart(sku);
+        setAddState('added');
+      } catch {
+        setAddState('error');
+      }
+    });
+  };
 
   return (
     <div>
@@ -35,7 +53,10 @@ export function VariantPicker({ variants }: { variants: readonly VariantOption[]
             <button
               key={variant.sku}
               type="button"
-              onClick={() => setSelectedSku(variant.sku)}
+              onClick={() => {
+                setSelectedSku(variant.sku);
+                setAddState('idle');
+              }}
               aria-pressed={variant.sku === selected.sku}
               className={cx(
                 'rounded-md border px-3 py-2 text-sm transition-colors',
@@ -51,10 +72,21 @@ export function VariantPicker({ variants }: { variants: readonly VariantOption[]
       </fieldset>
 
       <div className="mt-8">
-        <Button type="button" disabled>
-          {fr.pages.product.addToCart}
+        <Button type="button" onClick={handleAddToCart} disabled={isPending}>
+          {isPending ? fr.pages.product.adding : fr.pages.product.addToCart}
         </Button>
-        <p className="text-muted mt-2 text-xs">{fr.pages.product.cartComingSoon}</p>
+
+        {addState === 'added' && (
+          <p className="mt-2 text-sm">
+            {fr.pages.product.addedToCart}{' '}
+            <Link href="/panier" className="text-accent">
+              {fr.pages.product.viewCart}
+            </Link>
+          </p>
+        )}
+        {addState === 'error' && (
+          <p className="text-danger mt-2 text-sm">{fr.pages.product.addError}</p>
+        )}
       </div>
     </div>
   );

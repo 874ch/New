@@ -18,6 +18,7 @@
   --color-muted: #71717a;
   --color-accent: #b45309;
   --color-accent-foreground: #fffbeb;
+  --color-danger: #b91c1c;
 }
 
 body {

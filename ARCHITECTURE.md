@@ -932,7 +932,7 @@ l'absence de réponse.
 | 0     | Architecture + moteur de prix + test 305 €  | Opus   | ✅ terminée             |
 | 1     | Scaffolding Next.js, Prisma, tokens, routes | Sonnet | ✅ terminée             |
 | 2     | Design system, pages de contenu, catalogue  | Sonnet | ✅ terminée             |
-| 3     | Panier serveur, Stripe, commandes, admin    | Sonnet |                         |
+| 3     | Panier serveur, Stripe, commandes, admin    | Sonnet | ✅ terminée             |
 | 4     | Configurateur 3D, placement par touche      | Opus   | ⏸️ changement de modèle |
 | 5     | Prix live, validation, connexion au panier  | Opus   |                         |
 | 6     | Optimisation assets 3D et performance       | Sonnet | ⏸️ changement de modèle |
