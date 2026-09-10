@@ -16,8 +16,8 @@ import {
 import { useConfiguratorStore } from '@/lib/configurator/store';
 import type { ConfiguratorCatalog, LayoutKeyData } from '@/lib/configurator/types';
 
-const SWITCH_HOUSING_COLOR = '#2b2b30';
-const EMPTY_SLOT_COLOR = '#8b8b92';
+const SWITCH_HOUSING_COLOR = '#2b2115';
+const EMPTY_SLOT_COLOR = '#8a7a63';
 
 function colorMap(options: readonly { sku: string; swatchHex: string }[]): Record<string, string> {
   return Object.fromEntries(options.map((option) => [option.sku, option.swatchHex]));
@@ -51,7 +51,7 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
   const canPaint = step === 'switches' || step === 'keycaps';
 
   const chassisColor =
-    catalog.chassis.find((option) => option.sku === chassisSku)?.swatchHex ?? '#d4d4d8';
+    catalog.chassis.find((option) => option.sku === chassisSku)?.swatchHex ?? '#ddcfb4';
 
   const switchColors = useMemo(() => colorMap(catalog.switches), [catalog.switches]);
   const keycapColors = useMemo(() => colorMap(catalog.keycaps), [catalog.keycaps]);
@@ -157,7 +157,7 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
             y={LEVELS.keycapBottom}
             visibilityField="keycapSku"
             colorField="keycapSku"
-            baseColor="#e4e4e7"
+            baseColor="#e8dcc8"
             colorBySku={keycapColors}
             roughness={0.55}
             interactive={step === 'keycaps'}

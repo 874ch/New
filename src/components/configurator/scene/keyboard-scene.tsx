@@ -190,7 +190,7 @@ export function KeyboardScene({
       gl={{ antialias: true, toneMapping: ACESFilmicToneMapping }}
       scene={{ environmentIntensity: 0.85 }}
     >
-      <color attach="background" args={['#f2f2f0']} />
+      <color attach="background" args={['#f3ede1']} />
 
       <AdaptivePerformance onFallback={() => setDegraded(true)} />
       <DebugStatsExporter />

@@ -4,8 +4,9 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 /**
- * Image de partage générée au build — mêmes tokens neutres que `icon.tsx`,
- * à remplacer quand l'identité de marque sera définie (ARCHITECTURE.md §13 Q8).
+ * Image de partage générée au build — mêmes tokens que `icon.tsx` et
+ * `globals.css` (identité « atelier tech chaleureux »), à remplacer quand la
+ * marque définitive sera choisie (ARCHITECTURE.md §13 Q8).
  */
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -19,8 +20,8 @@ export default function OpengraphImage() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 24,
-          background: '#18181b',
-          color: '#fafaf9',
+          background: '#2b2115',
+          color: '#faf5ee',
         }}
       >
         <div
@@ -30,9 +31,9 @@ export default function OpengraphImage() {
             justifyContent: 'center',
             width: 96,
             height: 96,
-            borderRadius: 16,
-            background: '#fafaf9',
-            color: '#18181b',
+            borderRadius: 20,
+            background: '#e35d24',
+            color: '#fff6ed',
             fontSize: 56,
             fontWeight: 700,
           }}
@@ -40,7 +41,7 @@ export default function OpengraphImage() {
           K
         </div>
         <div style={{ fontSize: 56, fontWeight: 600 }}>Claviers Custom</div>
-        <div style={{ fontSize: 28, color: '#a1a1aa' }}>
+        <div style={{ fontSize: 28, color: '#c9b8a0' }}>
           Claviers mécaniques sur mesure, assemblés à la demande.
         </div>
       </div>

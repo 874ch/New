@@ -15,9 +15,9 @@ export const revalidate = 60;
 
 /** Couleur de repli quand une pièce du catalogue n'a pas de teinte définie. */
 const FALLBACK_SWATCH: Record<string, string> = {
-  CHASSIS: '#d4d4d8',
-  SWITCH: '#e4e4e7',
-  KEYCAP: '#e4e4e7',
+  CHASSIS: '#ddcfb4',
+  SWITCH: '#e8dcc8',
+  KEYCAP: '#e8dcc8',
 };
 
 function toOption(component: {
@@ -32,7 +32,7 @@ function toOption(component: {
     kind: component.kind as ComponentOption['kind'],
     name: component.name,
     unitPriceCents: component.unitPriceCents,
-    swatchHex: component.swatchHex ?? FALLBACK_SWATCH[component.kind] ?? '#e4e4e7',
+    swatchHex: component.swatchHex ?? FALLBACK_SWATCH[component.kind] ?? '#e8dcc8',
   };
 }
 

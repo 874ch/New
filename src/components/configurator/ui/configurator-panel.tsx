@@ -77,7 +77,7 @@ function SummaryLines({
               <span
                 aria-hidden="true"
                 className="border-border h-3.5 w-3.5 shrink-0 rounded-full border"
-                style={{ backgroundColor: option?.swatchHex ?? '#ffffff' }}
+                style={{ backgroundColor: option?.swatchHex ?? '#e8dcc8' }}
               />
               <span className="flex-1">{option?.name ?? sku}</span>
               <span className="tabular-nums">{quantity}×</span>

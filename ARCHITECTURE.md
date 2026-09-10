@@ -1181,3 +1181,51 @@ justifié cette passe, hors du découpage en phases d'origine :
 Comme pour `@vercel/analytics` (§12), le choix a été de préférer la solution
 sans dépendance et sans risque de régression sur `react-three-fiber` à la
 solution « idéale » mais fragile vis-à-vis de la contrainte de version.
+
+## 17. Identité visuelle — atelier tech chaleureux
+
+Le design initial (Phases 1-8) s'en tenait à une base neutre (gris froids,
+accent zinc/noir) : cohérente, mais qui ne raconte rien. Une direction
+explicite a été demandée : technique/gaming sobre et premium, mais
+**chaleureux** — à l'opposé d'un minimalisme froid façon maison de luxe, qui
+conviendrait à une autre marque mais pas à un magasin de matériel pour
+passionnés (claviers aujourd'hui, souris/tapis plus tard).
+
+- **Tokens `@theme` (`globals.css`)** — fond papier chaud (`#faf5ee`), encre
+  presque noire mais chaude (`#2b2115`), accent cuivré/orangé franc
+  (`#e35d24`) plutôt que discret, `--color-success`/`--color-danger` dédiés.
+  Tout le reste du site consomme déjà exclusivement ces tokens (`bg-surface`,
+  `text-muted`, `border-border`…) plutôt que la palette neutre brute de
+  Tailwind (vérifié : aucune classe `gray-`/`zinc-`/`slate-` dans `src/`) —
+  remplacer les valeurs des tokens a suffi à retexturer le site en entier,
+  sans toucher aux composants. `--radius-md`/`--radius-lg` élargis pour des
+  coins plus accueillants, avec le même effet de cascade automatique.
+- **Typographie** — Space Grotesk (titres) + Inter (texte courant), chargées
+  via `next/font/google` comme deux variables CSS ; règle globale
+  `h1..h6 { font-family: var(--font-display) }` plutôt qu'une classe par
+  composant.
+- **Composants retouchés à la main** là où les tokens seuls ne suffisaient
+  pas à apporter de la texture : `Button` (variante `primary` en accent plein,
+  `active:scale-[0.98]`), `Card` (ombre douce), `ProductCard` (léger
+  soulèvement au survol), `VariantPicker` (fond teinté `accent/10` sur le
+  choix sélectionné, plutôt qu'un simple contour).
+- **Sweep de cohérence** — recherche systématique des couleurs codées en dur
+  (`grep` sur les hex/`rgb()` dans `src/`) pour rattraper tout ce que les
+  tokens ne couvrent pas automatiquement : les teintes de repli de la vue 2D
+  (`keyboard-top-view.tsx`), de la scène 3D (`keyboard-model.tsx`,
+  fond du `Canvas`) et de `configurateur/page.tsx` (`FALLBACK_SWATCH`)
+  étaient restées sur les gris froids d'origine — remplacées par des teintes
+  chaudes cohérentes entre les deux vues. `global-error.tsx` (filet de
+  secours si le root layout lui-même plante, donc sans accès aux tokens
+  CSS) avait aussi été oublié lors du premier passage et gardait l'ancienne
+  palette en dur.
+- **Volontairement non touché** : le blanc de base de `meshStandardMaterial`
+  dans `key-instances.tsx` (multiplicateur neutre pour la couleur par
+  instance — le teinter casserait la couleur réelle de chaque touche, cf.
+  §9.3) ; les couleurs de `swatchHex` du seed (`prisma/seed.ts`) et des
+  fixtures de test, qui représentent de vraies teintes produit (châssis noir,
+  keycap blanche…) et n'ont pas vocation à suivre l'identité du site.
+
+Aucun changement de comportement : uniquement des valeurs de couleur/police et
+quelques classes utilitaires. `npm test`, `npx tsc --noEmit` et un build de
+production complets restent verts après coup.

@@ -32,10 +32,12 @@ export default function GlobalError({
           fontFamily: 'system-ui, sans-serif',
           textAlign: 'center',
           padding: '2rem',
+          background: '#faf5ee',
+          color: '#2b2115',
         }}
       >
         <h1 style={{ fontSize: '1.5rem', fontWeight: 600 }}>{fr.pages.errors.global.title}</h1>
-        <p style={{ marginTop: '0.5rem', color: '#71717a', maxWidth: '28rem' }}>
+        <p style={{ marginTop: '0.5rem', color: '#8a7a63', maxWidth: '28rem' }}>
           {fr.pages.errors.global.description}
         </p>
         <button
@@ -45,8 +47,8 @@ export default function GlobalError({
             marginTop: '1.5rem',
             padding: '0.625rem 1.25rem',
             borderRadius: '0.375rem',
-            background: '#18181b',
-            color: '#fafaf9',
+            background: '#e35d24',
+            color: '#fff6ed',
             fontSize: '0.875rem',
             fontWeight: 500,
           }}

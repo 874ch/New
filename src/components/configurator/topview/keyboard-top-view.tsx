@@ -22,7 +22,7 @@ import type { ComponentOption, ConfiguratorCatalog } from '@/lib/configurator/ty
  */
 
 const GAP = 0.06;
-const EMPTY_FILL = '#c4c4c9';
+const EMPTY_FILL = '#cabb9c';
 
 function optionMap(options: readonly ComponentOption[]): Map<string, ComponentOption> {
   return new Map(options.map((option) => [option.sku, option]));
@@ -76,14 +76,14 @@ export function KeyboardTopView({ catalog }: { catalog: ConfiguratorCatalog }) {
       role="group"
       aria-label="Vue de dessus du clavier"
     >
-      <rect x={0} y={0} width={viewW} height={viewH} rx={0.4} fill={chassisColor ?? '#d4d4d8'} />
+      <rect x={0} y={0} width={viewW} height={viewH} rx={0.4} fill={chassisColor ?? '#ddcfb4'} />
       <rect
         x={CHASSIS_MARGIN - 0.08}
         y={CHASSIS_MARGIN - 0.08}
         width={widthU + 0.16}
         height={heightU + 0.16}
         rx={0.12}
-        fill="rgb(0 0 0 / 0.15)"
+        fill="rgb(43 33 21 / 0.15)"
       />
 
       {catalog.layout.keys.map((key) => {
@@ -106,7 +106,7 @@ export function KeyboardTopView({ catalog }: { catalog: ConfiguratorCatalog }) {
             height={key.heightU - GAP}
             rx={0.08}
             fill={fill}
-            stroke={isHovered ? '#ffffff' : 'rgb(0 0 0 / 0.25)'}
+            stroke={isHovered ? '#e35d24' : 'rgb(43 33 21 / 0.25)'}
             strokeWidth={isHovered ? 0.035 : 0.012}
             style={{ cursor: paintable ? 'pointer' : 'default', outline: 'none' }}
             role="button"

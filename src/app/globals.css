@@ -1,29 +1,47 @@
 @import 'tailwindcss';
 
 /**
- * Tokens de design — PLACEHOLDERS.
- *
- * La marque n'est pas encore définie (cf. ARCHITECTURE.md §13 Q8) : cette
- * palette neutre (graphite / papier + un accent cuivré, en écho aux
- * claviers mécaniques) sert de base cohérente jusqu'à l'identité définitive.
+ * Tokens de design — identité « atelier tech chaleureux » (pas la marque
+ * définitive, cf. ARCHITECTURE.md §13 Q8, mais un parti pris assumé plutôt
+ * qu'un gris neutre par défaut) : fond papier chaud, accent cuivré/orangé
+ * franc plutôt que discret, une pointe de vert pour les confirmations.
+ * L'idée : un magasin de matériel pour passionnés, pas une maison de luxe —
+ * chaleureux et technique, jamais froid ni austère.
  * Remplacer les valeurs ci-dessous suffit à retexturer tout le site.
  */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
 
-  --color-background: #fafaf9;
-  --color-foreground: #18181b;
-  --color-surface: #ffffff;
-  --color-border: #e4e4e7;
-  --color-muted: #71717a;
-  --color-accent: #b45309;
-  --color-accent-foreground: #fffbeb;
-  --color-danger: #b91c1c;
+  --color-background: #faf5ee;
+  --color-foreground: #2b2115;
+  --color-surface: #fffdfa;
+  --color-border: #e8dcc8;
+  --color-muted: #8a7a63;
+  --color-accent: #e35d24;
+  --color-accent-foreground: #fff6ed;
+  --color-success: #2f7a4d;
+  --color-success-foreground: #f0faf3;
+  --color-danger: #c73434;
+
+  /* Coins plus généreux que le défaut Tailwind : moins « logiciel B2B », plus accueillant. */
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 
 @keyframes toast-in {

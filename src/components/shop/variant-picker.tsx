@@ -61,9 +61,9 @@ export function VariantPicker({ variants }: { variants: readonly VariantOption[]
               }}
               aria-pressed={variant.sku === selected.sku}
               className={cx(
-                'rounded-md border px-3 py-2 text-sm transition-colors',
+                'rounded-md border px-3 py-2 text-sm font-medium transition-all active:scale-[0.98]',
                 variant.sku === selected.sku
-                  ? 'border-accent text-accent'
+                  ? 'border-accent bg-accent/10 text-accent'
                   : 'border-border hover:border-accent hover:text-accent',
               )}
             >

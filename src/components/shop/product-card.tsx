@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
 
   return (
     <Link href={`/produit/${product.slug}`} className="group block">
-      <Card className="group-hover:border-accent overflow-hidden transition-colors">
+      <Card className="group-hover:border-accent overflow-hidden transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
         <KeyboardGlyph className="aspect-[4/3]" />
         <div className="space-y-2 p-4">
           <div className="flex items-start justify-between gap-2">
