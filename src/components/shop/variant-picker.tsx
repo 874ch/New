@@ -8,6 +8,7 @@ import { Price } from '@/components/ui/price';
 import { fr } from '@/content/fr';
 import { addStandardVariantToCart } from '@/lib/cart-actions';
 import { cx } from '@/lib/cx';
+import { useToastStore } from '@/lib/toast';
 
 export interface VariantOption {
   sku: string;
@@ -34,6 +35,7 @@ export function VariantPicker({ variants }: { variants: readonly VariantOption[]
       try {
         await addStandardVariantToCart(sku);
         setAddState('added');
+        useToastStore.getState().show(fr.pages.product.addedToCart);
       } catch {
         setAddState('error');
       }

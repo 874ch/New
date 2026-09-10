@@ -15,6 +15,7 @@ import { CONFIGURATOR_STEPS } from '@/lib/configurator/types';
 import type { ComponentOption, ConfiguratorCatalog } from '@/lib/configurator/types';
 import { computeBuildPrice } from '@/lib/pricing';
 import type { PriceBreakdown } from '@/lib/pricing';
+import { useToastStore } from '@/lib/toast';
 
 function ProgressBar({
   done,
@@ -99,6 +100,7 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
   const setActiveSwitch = useConfiguratorStore((state) => state.setActiveSwitch);
   const setActiveKeycap = useConfiguratorStore((state) => state.setActiveKeycap);
   const fillAll = useConfiguratorStore((state) => state.fillAll);
+  const fillEmpty = useConfiguratorStore((state) => state.fillEmpty);
   const reset = useConfiguratorStore((state) => state.reset);
 
   const keyCodes = useConfiguratorStore((state) => state.keyCodes);
@@ -132,6 +134,7 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
       const result = await addCustomBuildToCart(build);
       if (result.ok) {
         setAddState('added');
+        useToastStore.getState().show(fr.pages.configurator.added);
       } else {
         setAddState('error');
         setAddError(result.error);
@@ -214,6 +217,9 @@ export function ConfiguratorPanel({ catalog }: { catalog: ConfiguratorCatalog })
 
       {(step === 'switches' || step === 'keycaps') && activeBrush && (
         <div className="space-y-2">
+          <Button variant="outline" size="sm" className="w-full" onClick={fillEmpty}>
+            {fr.pages.configurator.fillEmpty(activeBrush.name)}
+          </Button>
           <Button variant="outline" size="sm" className="w-full" onClick={fillAll}>
             {fr.pages.configurator.fillAll(activeBrush.name)}
           </Button>

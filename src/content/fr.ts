@@ -77,7 +77,8 @@ export const fr = {
       previous: 'Précédent',
       next: 'Suivant',
       fillAll: (name: string) => `Tout mettre en ${name}`,
-      clearHint: 'Maj + clic pour retirer une pièce.',
+      fillEmpty: (name: string) => `Remplir le reste avec ${name}`,
+      clearHint: 'Recliquez une pièce déjà posée pour la retirer (ou Maj + clic).',
       progress: (done: number, total: number) =>
         `${done} / ${total} touches assignées (switch + keycap)`,
       switchProgress: (done: number, total: number) => `${done} / ${total} switches posés`,
@@ -112,11 +113,16 @@ export const fr = {
       renderMode: {
         label: 'Affichage',
         '3d': '3D',
-        '2d': 'Vue de dessus',
+        '2d': '2D',
+      },
+      history: {
+        label: 'Historique',
+        undo: 'Annuler',
+        redo: 'Rétablir',
       },
       a11y: {
         sceneHidden:
-          'Représentation 3D du clavier, non pilotable au clavier. Utilisez le bouton « Vue de dessus » ci-dessus pour configurer le clavier sans souris.',
+          'Représentation 3D du clavier, non pilotable au clavier. Utilisez le bouton « 2D » ci-dessus pour configurer le clavier sans souris.',
       },
     },
     cart: {

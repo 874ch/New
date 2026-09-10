@@ -1132,3 +1132,52 @@ spécifiquement, tout autre hébergeur Node fonctionne pour le reste).
 10. **Build** — `npm run typecheck && npm test && npm run lint && npm run build`
     doivent passer sans erreur sur la branche déployée (c'est la suite
     utilisée à la fin de chaque phase de ce projet).
+
+---
+
+## 16. Itération post-lancement — confort du configurateur
+
+Après la mise en ligne (§15), une première série de retours d'usage réels a
+justifié cette passe, hors du découpage en phases d'origine :
+
+- **Caméra bloquée après mise en arrière-plan (bug)** — `CameraRig`
+  (`keyboard-scene.tsx`) déplaçait `camera.position` directement, sans le
+  signaler à `OrbitControls`, qui recalcule sa propre position à chaque frame
+  à partir de son état interne (rayon/angles autour de `target`) : la
+  mutation directe se faisait donc écraser dès la frame suivante, avec pour
+  seul symptôme visible « on ne peut plus qu'zoomer ». Corrigé en donnant à
+  `CameraRig` une référence vers les contrôles et en appelant
+  `controlsRef.current.update()` après chaque déplacement manuel de la
+  caméra — y compris au retour au premier plan (`visibilitychange`), le
+  contexte WebGL pouvant se désynchroniser des contrôles sur mobile.
+  `minPolarAngle`/`maxPolarAngle` élargis pour plus de liberté de rotation.
+- **Retrait tactile d'une pièce** — retaper une position déjà posée avec le
+  même pinceau la retire désormais (`paintKey` dans
+  `src/lib/configurator/store.ts`), en plus du `Maj + clic` existant qui
+  reste disponible mais est inutilisable sans clavier physique.
+- **Remplissage des cases vides** — nouvelle action `fillEmpty`, distincte de
+  `fillAll` : ne touche jamais une position déjà posée, contrairement à
+  « Tout mettre en X » qui écrase tout.
+- **Annuler / rétablir** — piles `past`/`future` dans le store (châssis +
+  positions uniquement, pas le pinceau actif ni l'étape — état UI éphémère
+  non concerné), plafonnées à 50 entrées. Boutons dédiés à côté du bouton
+  3D/2D dans le configurateur.
+- **Notifications d'ajout au panier** — `src/lib/toast.ts` (petit store
+  Zustand indépendant) + `src/components/toast-viewport.tsx`, monté une
+  fois dans le layout racine. Icône panier ajoutée dans l'en-tête, visible
+  sur mobile sans ouvrir le menu (elle n'était accessible qu'via le menu
+  hamburger auparavant).
+- **Animation d'entrée de page, sans dépendance** — `<ViewTransition>` de
+  React (natif depuis peu, zéro configuration dans l'App Router) aurait été
+  la solution la plus propre, mais nécessite une version canary de React,
+  incompatible avec le `react@19.2.8` épinglé pour `react-three-fiber`
+  (`>=19 <19.3`) — cœur du configurateur, donc hors de question d'y toucher
+  pour une animation. Solution de repli sans dépendance :
+  `src/components/page-transition.tsx` rejoue une animation CSS d'entrée à
+  chaque changement de route (démontage/remontage forcé via `key={pathname}`).
+  Pas de vraie transition croisée avec la page sortante — un compromis
+  assumé plutôt qu'un risque sur la stack 3D.
+
+Comme pour `@vercel/analytics` (§12), le choix a été de préférer la solution
+sans dépendance et sans risque de régression sur `react-three-fiber` à la
+solution « idéale » mais fragile vis-à-vis de la contrainte de version.

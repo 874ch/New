@@ -8,7 +8,6 @@ import { fr } from '@/content/fr';
 const links = [
   { href: '/boutique', label: fr.nav.shop },
   { href: '/configurateur', label: fr.nav.configurator },
-  { href: '/panier', label: fr.nav.cart },
 ] as const;
 
 export function MobileNav() {

@@ -4,8 +4,10 @@ import type { ReactNode } from 'react';
 
 import { Analytics } from '@/components/analytics';
 import { CookieBanner } from '@/components/cookie-banner';
+import { PageTransition } from '@/components/page-transition';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { ToastViewport } from '@/components/toast-viewport';
 
 import './globals.css';
 
@@ -45,10 +47,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="fr" className={inter.variable}>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <SiteFooter />
         <CookieBanner />
         <Analytics />
+        <ToastViewport />
       </body>
     </html>
   );

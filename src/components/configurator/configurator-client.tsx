@@ -56,6 +56,72 @@ function ViewButtons({
   );
 }
 
+function UndoRedoButtons() {
+  const undo = useConfiguratorStore((state) => state.undo);
+  const redo = useConfiguratorStore((state) => state.redo);
+  const canUndo = useConfiguratorStore((state) => state.past.length > 0);
+  const canRedo = useConfiguratorStore((state) => state.future.length > 0);
+
+  return (
+    <div
+      role="group"
+      aria-label={fr.pages.configurator.history.label}
+      className="border-border bg-surface/90 flex gap-1 rounded-md border p-1 backdrop-blur"
+    >
+      <button
+        type="button"
+        onClick={undo}
+        disabled={!canUndo}
+        aria-label={fr.pages.configurator.history.undo}
+        title={fr.pages.configurator.history.undo}
+        className="text-muted hover:text-foreground flex h-7 w-7 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-30"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+          <polyline
+            points="4 8 4 14 10 14"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6.5 18.5A9 9 0 1 0 8.6 5.6L4 10"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={redo}
+        disabled={!canRedo}
+        aria-label={fr.pages.configurator.history.redo}
+        title={fr.pages.configurator.history.redo}
+        className="text-muted hover:text-foreground flex h-7 w-7 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-30"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+          <polyline
+            points="20 8 20 14 14 14"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M17.5 18.5A9 9 0 1 1 15.4 5.6L20 10"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function RenderModeToggle({
   value,
   onChange,
@@ -68,7 +134,7 @@ function RenderModeToggle({
     <div
       role="group"
       aria-label={fr.pages.configurator.renderMode.label}
-      className="border-border bg-surface/90 absolute top-16 right-4 flex gap-1 rounded-md border p-1 backdrop-blur sm:top-4"
+      className="border-border bg-surface/90 flex gap-1 rounded-md border p-1 backdrop-blur"
     >
       {modes.map((mode) => (
         <button
@@ -134,7 +200,10 @@ export function ConfiguratorClient({ catalog }: { catalog: ConfiguratorCatalog }
               </div>
             )}
 
-            {webglAvailable && <RenderModeToggle value={renderMode} onChange={setRenderMode} />}
+            <div className="absolute top-16 right-4 flex flex-col items-end gap-2 sm:top-4">
+              <UndoRedoButtons />
+              {webglAvailable && <RenderModeToggle value={renderMode} onChange={setRenderMode} />}
+            </div>
           </>
         )}
       </div>

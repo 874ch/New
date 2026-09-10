@@ -3,8 +3,10 @@
 import { ContactShadows, OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import { ACESFilmicToneMapping, PMREMGenerator, Vector3 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import { CHASSIS_MARGIN } from '@/components/configurator/scene/geometry';
 import { KeyboardModel } from '@/components/configurator/scene/keyboard-model';
@@ -67,15 +69,28 @@ function StudioEnvironment() {
  * Amène la caméra vers l'angle demandé, sans à-coup, à une distance qui
  * cadre tout le clavier pour le ratio d'aspect *actuel* du canvas (recalculé
  * au resize — rotation d'écran mobile comprise).
+ *
+ * Resynchronise systématiquement `OrbitControls` (`controlsRef.update()`)
+ * après avoir déplacé la caméra à la main : `OrbitControls` recalcule sa
+ * position à chaque frame à partir de son propre état interne (rayon/angles
+ * autour de `target`), donc une mutation directe de `camera.position` ici
+ * sans le prévenir se fait immédiatement écraser au frame suivant — l'effet
+ * perçu est qu'on ne peut plus qu'zoomer, la rotation semblant figée.
+ *
+ * Le même resync est aussi rejoué au retour au premier plan (`visibilitychange`) :
+ * sur mobile, mettre l'onglet en arrière-plan peut désynchroniser le contexte
+ * WebGL et les contrôles, ce qui bloquait totalement la caméra jusqu'ici.
  */
 function CameraRig({
   view,
   widthU,
   heightU,
+  controlsRef,
 }: {
   view: CameraView;
   widthU: number;
   heightU: number;
+  controlsRef: RefObject<OrbitControlsImpl | null>;
 }) {
   const camera = useThree((state) => state.camera);
   const size = useThree((state) => state.size);
@@ -93,10 +108,21 @@ function CameraRig({
     animating.current = true;
   }, [view, distance]);
 
+  useEffect(() => {
+    function resyncOnForeground() {
+      if (document.visibilityState === 'visible') {
+        animating.current = true;
+      }
+    }
+    document.addEventListener('visibilitychange', resyncOnForeground);
+    return () => document.removeEventListener('visibilitychange', resyncOnForeground);
+  }, []);
+
   useFrame((_, delta) => {
     if (!animating.current) return;
     camera.position.lerp(target.current, Math.min(1, delta * 6));
     camera.lookAt(0, 0, 0);
+    controlsRef.current?.update();
     if (camera.position.distanceTo(target.current) < 0.05) {
       camera.position.copy(target.current);
       animating.current = false;
@@ -144,6 +170,7 @@ export function KeyboardScene({
   className?: string;
 }) {
   const [degraded, setDegraded] = useState(false);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
   const widthU = catalog.layout.widthU + 2 * CHASSIS_MARGIN;
   const heightU = catalog.layout.heightU + 2 * CHASSIS_MARGIN;
   // Distance de secours pour le cadrage initial (avant que le Canvas ne
@@ -167,7 +194,7 @@ export function KeyboardScene({
 
       <AdaptivePerformance onFallback={() => setDegraded(true)} />
       <DebugStatsExporter />
-      <CameraRig view={view} widthU={widthU} heightU={heightU} />
+      <CameraRig view={view} widthU={widthU} heightU={heightU} controlsRef={controlsRef} />
 
       {degraded ? (
         // GPU faible : éclairage 3 points fixe, pas d'ombres ni d'environnement PBR
@@ -203,12 +230,13 @@ export function KeyboardScene({
       )}
 
       <OrbitControls
+        ref={controlsRef}
         makeDefault
         enablePan={false}
         minDistance={8}
         maxDistance={fallbackDistance * 1.8}
-        minPolarAngle={0.15}
-        maxPolarAngle={Math.PI / 2.15}
+        minPolarAngle={0.08}
+        maxPolarAngle={Math.PI / 2.05}
         dampingFactor={0.12}
       />
     </Canvas>
