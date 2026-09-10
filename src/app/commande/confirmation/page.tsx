@@ -10,6 +10,7 @@ import type { OrderItemSnapshot } from '@/lib/orders/snapshot';
 
 export const metadata: Metadata = {
   title: fr.pages.orderConfirmation.title,
+  robots: { index: false, follow: false },
 };
 
 interface OrderConfirmationPageProps {

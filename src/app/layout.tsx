@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import { Analytics } from '@/components/analytics';
+import { CookieBanner } from '@/components/cookie-banner';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -23,10 +25,16 @@ export const metadata: Metadata = {
     template: '%s · Claviers Custom',
   },
   description,
+  alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'Claviers Custom',
+    title: 'Claviers Custom',
+    description,
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'Claviers Custom',
     description,
   },
@@ -39,6 +47,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <CookieBanner />
+        <Analytics />
       </body>
     </html>
   );

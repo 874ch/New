@@ -12,10 +12,18 @@ import { getStripeClient, siteUrl } from '@/lib/stripe';
  * un total transmis par le client — puis redirige vers la page de paiement
  * hébergée par Stripe.
  */
-export async function createCheckoutSessionAction(): Promise<void> {
+export async function createCheckoutSessionAction(formData: FormData): Promise<void> {
   const cart = await getCart();
 
   if (!cart || cart.items.length === 0) {
+    redirect('/panier');
+  }
+
+  // La case à cocher côté client (attribut HTML `required`) peut être
+  // contournée par une requête forgée : le consentement à l'absence de
+  // rétractation sur le sur-mesure (article L.221-28) est donc revérifié ici.
+  const hasCustomBuild = cart.items.some((item) => item.kind === 'CUSTOM_BUILD');
+  if (hasCustomBuild && formData.get('customBuildConsent') !== 'on') {
     redirect('/panier');
   }
 

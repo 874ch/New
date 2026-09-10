@@ -11,6 +11,7 @@ import { createCheckoutSessionAction } from '@/lib/checkout-actions';
 
 export const metadata: Metadata = {
   title: fr.pages.cart.title,
+  robots: { index: false, follow: false },
 };
 
 export default async function CartPage() {
@@ -18,6 +19,7 @@ export default async function CartPage() {
   // Le panier affiche déjà les prix du catalogue courant, ceux-là mêmes qui
   // seront facturés : aucun total mémorisé n'est réutilisé.
   const lines = cart ? await priceCartLines(cart.items) : [];
+  const hasCustomBuild = cart?.items.some((item) => item.kind === 'CUSTOM_BUILD') ?? false;
 
   return (
     <Container className="py-16">
@@ -53,6 +55,12 @@ export default async function CartPage() {
             </div>
 
             <form action={createCheckoutSessionAction} className="mt-6">
+              {hasCustomBuild && (
+                <label className="text-muted mb-4 flex gap-2 text-xs">
+                  <input type="checkbox" name="customBuildConsent" required className="mt-0.5" />
+                  <span>{fr.pages.cart.customBuildConsent}</span>
+                </label>
+              )}
               <Button type="submit" className="w-full">
                 {fr.pages.cart.checkout}
               </Button>

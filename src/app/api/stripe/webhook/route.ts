@@ -6,6 +6,7 @@ import type Stripe from 'stripe';
 import { cartInclude } from '@/lib/cart';
 import { priceCartLines } from '@/lib/cart-pricing';
 import { db } from '@/lib/db';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 import type { OrderItemSnapshot } from '@/lib/orders/snapshot';
 import { getStripeClient, requireStripeWebhookSecret } from '@/lib/stripe';
 import type { Prisma } from '@/generated/prisma/client';
@@ -78,10 +79,26 @@ async function handleCheckoutCompleted(
   const vatRateBp = 2000;
   const vatCents = totalCents - Math.round(totalCents / (1 + vatRateBp / 10_000));
 
+  // Vérification défensive (§6.5 ARCHITECTURE.md) : le panier a pu changer
+  // entre la création de la session et la livraison du webhook. On enregistre
+  // la commande dans tous les cas (l'argent a déjà été encaissé), mais un
+  // écart doit être visible pour une vérification manuelle avant fabrication —
+  // bloquer automatiquement la fabrication demanderait un statut de commande
+  // dédié, non implémenté à ce jour (cf. §13).
+  if (typeof session.amount_total === 'number' && session.amount_total !== totalCents) {
+    console.error(
+      `Écart de montant sur la session ${session.id} : Stripe a encaissé ${session.amount_total}, ` +
+        `le panier vaut ${totalCents} au moment du webhook. Commande enregistrée, vérification manuelle requise.`,
+    );
+  }
+
   const shippingDetails = session.collected_information?.shipping_details;
   const shippingAddress = shippingDetails
     ? { name: shippingDetails.name, address: shippingDetails.address }
     : { name: session.customer_details?.name, address: session.customer_details?.address };
+
+  const orderNumber = generateOrderNumber();
+  const email = session.customer_details?.email ?? '';
 
   try {
     await db.$transaction(async (tx) => {
@@ -92,9 +109,9 @@ async function handleCheckoutCompleted(
 
       await tx.order.create({
         data: {
-          number: generateOrderNumber(),
+          number: orderNumber,
           status: 'PAID',
-          email: session.customer_details?.email ?? '',
+          email,
           phone: session.customer_details?.phone ?? undefined,
           shippingAddress: toJson(shippingAddress),
           billingAddress: toNullableJson(session.customer_details?.address),
@@ -124,6 +141,10 @@ async function handleCheckoutCompleted(
       return;
     }
     throw error;
+  }
+
+  if (email) {
+    await sendOrderConfirmationEmail({ email, number: orderNumber, totalCents });
   }
 }
 

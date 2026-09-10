@@ -662,9 +662,17 @@ STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 NEXT_PUBLIC_SITE_URL
-ADMIN_SESSION_SECRET    # signature des cookies de session admin
-RESEND_API_KEY          # e-mails transactionnels (à confirmer, §13)
+RESEND_API_KEY          # e-mails transactionnels — implémenté en Phase 8
+ORDER_EMAIL_FROM        # expéditeur des e-mails de commande (§13 Q8 : marque à définir)
+ADMIN_EMAIL             # bootstrap du premier compte admin, lu par `npm run db:seed`
+ADMIN_PASSWORD          # idem — peut être retiré une fois le compte créé
 ```
+
+Pas de secret de signature de session admin : `AdminSession` stocke un token
+opaque de 32 octets aléatoires (haché en base), jamais un JWT signé — voir
+`src/lib/auth/session.ts`. Une variable `ADMIN_SESSION_SECRET` avait été
+prévue avant l'implémentation ; elle n'a jamais été nécessaire et a été
+retirée de la liste plutôt que laissée comme référence morte.
 
 ---
 
@@ -996,9 +1004,39 @@ public/
 - **Secrets** : uniquement en variables d'environnement, jamais côté client
   hors clés `NEXT_PUBLIC_*`.
 - **RGPD** : données personnelles limitées à ce qu'exige une expédition ;
-  bandeau cookies et pages légales en Phase 8 ; **les templates juridiques
-  seront soumis à validation, aucune rédaction juridique définitive sans
-  supervision.**
+  bandeau cookies et pages légales implémentés en Phase 8 (`/mentions-legales`,
+  `/cgv`, `/confidentialite`, `src/components/cookie-banner.tsx`) ; **les
+  templates juridiques seront soumis à validation, aucune rédaction juridique
+  définitive sans supervision.**
+- **Bandeau cookies et analytics, côté client délibérément** : le choix de
+  consentement est lu et écrit dans `document.cookie` (`src/lib/consent.ts`),
+  jamais via `cookies()` côté serveur dans le layout racine. `cookies()` est
+  une API de requête : l'utiliser dans un layout qui enveloppe tout le site
+  bascule **toutes les pages** en rendu dynamique (constaté au build en
+  Phase 8 — `/`, `/boutique`, `/configurateur` et les pages légales, pourtant
+  statiques, sont passées de `○ Static` à `ƒ Dynamic`). Sans les Cache
+  Components de Next 16 (non activés ici, cf. `next.config.ts`), un
+  `<Suspense>` autour du bandeau n'isole pas ce coût pour le reste de la
+  page — seul un composant client évite le problème.
+- **Bandeau cookies, compromis assumé sur mobile** : en position fixe
+  bas-d'écran, le bandeau peut recouvrir le bas de l'écran tant qu'il n'est
+  pas fermé — sur `/configurateur` en portrait étroit, ça inclut la seconde
+  option de châssis avant que le visiteur ne réponde. Comportement standard
+  (quasi tout site conforme RGPD fait pareil) et temporaire — un tapotement
+  sur « Accepter »/« Refuser », visibles en premier, libère l'écran. Texte et
+  espacement déjà resserrés sur mobile pour limiter la gêne ; pas de solution
+  plus poussée retenue (réserver l'espace dynamiquement recouplerait le
+  layout statique et ce composant client, cf. point précédent).
+- **Analytics** : Vercel Web Analytics (script `/_vercel/insights/script.js`
+  chargé à la main, sans le paquet npm — cf. `src/components/analytics.tsx`),
+  chargé uniquement après consentement explicite via le bandeau cookies, même
+  si cette mesure sans cookie pourrait relever d'une exemption RGPD : on
+  respecte le choix du visiteur plutôt que de présumer de l'exemption.
+- **Rétractation** : le configurateur produit des biens personnalisés, exclus
+  du droit de rétractation (article L.221-28 3° du Code de la consommation).
+  Le client coche une case dédiée avant paiement dès que le panier contient un
+  clavier configuré (`src/app/panier/page.tsx`), revérifiée côté serveur dans
+  `createCheckoutSessionAction` — la case HTML seule serait contournable.
 - **TVA** : prix affichés **TTC** (obligation B2C en France), TVA 20 %
   ventilée sur la facture. À confirmer selon le régime fiscal (§13).
 
@@ -1017,8 +1055,9 @@ l'absence de réponse.
 | 4   | **Comptes clients** : nécessaires, ou paiement invité suffisant ?                                                                                  | paiement invité, suivi de commande par lien signé                                        | Phase 3        |
 | 5   | **Prix des claviers tout faits** (§4.7) : prix catalogue propre, ou somme des pièces ?                                                             | prix catalogue propre                                                                    | Phase 2        |
 | 6   | **Anglais** : prévu à court terme ? Ajouter `[locale]` après coup impose de restructurer le routage.                                               | FR uniquement, textes centralisés dans `src/content/fr.ts` pour rendre l'ajout mécanique | Phase 1        |
-| 7   | **E-mails transactionnels** : fournisseur ?                                                                                                        | Resend                                                                                   | Phase 3        |
-| 8   | **Marque** : nom, logo, palette.                                                                                                                   | tokens neutres en attendant, remplaçables en un fichier                                  | Phase 2        |
+| 7   | **E-mails transactionnels** : fournisseur ?                                                                                                        | Resend — décidé en Phase 3, implémenté en Phase 8 (`src/lib/email.ts`, oublié en Phase 3) | Phase 3        |
+| 8   | **Marque** : nom, logo, palette, photos produit.                                                                                                  | tokens neutres + silhouette générique (`KeyboardGlyph`) en attendant, remplaçables en un fichier — `Product.images` existe en base mais n'est pas encore lu par le front | Phase 2        |
+| 9   | **Statut de commande en cas d'écart de montant** (§6.5) : un statut dédié bloquant la fabrication ? Nécessite une migration du `enum OrderStatus`. | non implémenté — écart seulement loggé (`console.error`) dans le webhook, vérification manuelle | Phase 8+ (non traité) |
 
 ---
 
@@ -1034,4 +1073,58 @@ l'absence de réponse.
 | 5     | Prix live, validation, connexion au panier  | Opus   | ✅ terminée |
 | 6     | Optimisation assets 3D et performance       | Sonnet | ✅ terminée |
 | 7     | QA, responsive, accessibilité, tactile      | Sonnet | ✅ terminée |
-| 8     | Contenu, SEO, légal, mise en production     | Sonnet |             |
+| 8     | Contenu, SEO, légal, mise en production     | Sonnet | ✅ terminée |
+
+---
+
+## 15. Checklist de mise en production
+
+À dérouler dans l'ordre lors du premier déploiement (Vercel recommandé — le
+projet n'utilise aucune API propriétaire Vercel, seule l'étape 7 en dépend
+spécifiquement, tout autre hébergeur Node fonctionne pour le reste).
+
+1. **Base de données** — provisionner un Postgres accessible en production
+   (Vercel Postgres, Neon, Supabase…). Renseigner `DATABASE_URL` (chaîne
+   poolée, `pgbouncer=true`) et `DIRECT_URL` (chaîne directe, pour les
+   migrations) — voir §6.6 et `.env.example`.
+2. **Migrations et amorçage** — `npx prisma migrate deploy` (jamais
+   `migrate dev` en production, interactif). Puis `npm run db:seed` : sans
+   danger à rejouer, toutes les écritures du script sont des `upsert`
+   (layout, catalogue, produit, **et** le compte admin).
+3. **Compte admin** — renseigner `ADMIN_EMAIL`/`ADMIN_PASSWORD` avant le seed
+   initial ; peuvent être retirés de l'environnement une fois le compte admin
+   créé (aucune inscription publique n'existe, le seed ne les relit pas si le
+   compte existe déjà — en toute rigueur l'`upsert` reposant sur l'e-mail
+   mettrait à jour le mot de passe si la variable change, à garder en tête).
+4. **Stripe** — basculer sur les clés **live** (`sk_live_…`, `pk_live_…`),
+   pas les clés `test`. Créer un endpoint webhook Stripe pointant vers
+   `https://<domaine>/api/stripe/webhook`, écoutant `checkout.session.completed`,
+   et copier le secret de signature généré dans `STRIPE_WEBHOOK_SECRET`.
+5. **Resend** — créer un compte, vérifier un domaine d'envoi, renseigner
+   `RESEND_API_KEY` et `ORDER_EMAIL_FROM`. Sans domaine vérifié, le code se
+   rabat sur l'expéditeur de test `onboarding@resend.dev` (§6.5, `src/lib/email.ts`) —
+   à ne pas garder pour de vrais clients.
+6. **Domaine et URL** — configurer le domaine définitif, puis renseigner
+   `NEXT_PUBLIC_SITE_URL` avec cette URL **avant** le build (elle est
+   compilée dans les URLs de retour Stripe, le sitemap, `robots.txt` et les
+   métadonnées Open Graph).
+7. **Analytics** — activer Vercel Web Analytics dans les réglages du projet
+   (Vercel → Settings → Analytics). Le site charge lui-même la balise
+   `/_vercel/insights/script.js` (`src/components/analytics.tsx`, sans le
+   paquet npm) une fois le consentement du bandeau cookies accordé ; sans
+   cette option activée côté Vercel, la balise répond 404 sans rien casser.
+8. **Contenu légal** — remplacer tous les `[texte entre crochets]` dans
+   `/mentions-legales`, `/cgv` et `/confidentialite` (`src/content/fr.ts`,
+   clé `pages.legal`) par les informations réelles de l'entreprise, **et
+   faire valider les trois pages par un professionnel du droit** avant
+   d'ouvrir les ventes — voir le bandeau d'avertissement affiché sur ces
+   pages tant que ce n'est pas fait.
+9. **Vérification de bout en bout** — avant de couper les clés Stripe test,
+   passer une commande complète (catalogue **et** configurateur, pour
+   couvrir la case de consentement rétractation) en mode test sur l'URL de
+   production, confirmer la réception du webhook (Stripe Dashboard →
+   Developers → Webhooks → logs de l'endpoint) et de l'e-mail de
+   confirmation.
+10. **Build** — `npm run typecheck && npm test && npm run lint && npm run build`
+    doivent passer sans erreur sur la branche déployée (c'est la suite
+    utilisée à la fin de chaque phase de ce projet).

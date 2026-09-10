@@ -9,6 +9,13 @@ export const fr = {
     name: 'Claviers Custom',
     tagline: 'Claviers mécaniques sur mesure, assemblés à la demande.',
   },
+  cookies: {
+    bannerLabel: 'Gestion des cookies',
+    message: 'Cookies essentiels (panier, session) et, avec votre accord, cookies de mesure d’audience.',
+    learnMore: 'En savoir plus',
+    accept: 'Accepter',
+    decline: 'Refuser',
+  },
   nav: {
     home: 'Accueil',
     shop: 'Boutique',
@@ -36,6 +43,7 @@ export const fr = {
     },
     shop: {
       title: 'Boutique',
+      metaDescription: 'Claviers mécaniques assemblés et réglés, prêts à commander.',
       empty: 'Aucun clavier disponible pour le moment.',
       fromPrice: 'À partir de',
       limitedStock: 'Stock limité',
@@ -120,6 +128,8 @@ export const fr = {
       total: 'Total',
       checkout: 'Passer au paiement',
       checkoutError: 'Le paiement est momentanément indisponible, réessayez dans un instant.',
+      customBuildConsent:
+        'Je comprends que les claviers configurés sur mesure sont fabriqués selon mes choix et ne bénéficient pas du droit de rétractation de 14 jours (article L.221-28 du Code de la consommation — voir les CGV).',
     },
     orderConfirmation: {
       title: 'Merci pour votre commande',
@@ -152,6 +162,172 @@ export const fr = {
         title: 'Page introuvable',
         description: 'Cette page n’existe pas ou plus.',
         backHome: 'Retour à l’accueil',
+      },
+    },
+    legal: {
+      disclaimer:
+        'Modèle de page juridique fourni à titre indicatif — à faire relire et valider par un professionnel du droit avant toute mise en ligne. Les mentions entre crochets sont à compléter.',
+      nav: {
+        mentionsLegales: 'Mentions légales',
+        cgv: 'CGV',
+        confidentialite: 'Confidentialité',
+      },
+      mentionsLegales: {
+        title: 'Mentions légales',
+        sections: [
+          {
+            heading: 'Éditeur du site',
+            paragraphs: [
+              '[Raison sociale à compléter], [forme juridique à compléter, ex. SASU] au capital de [montant] €, immatriculée au Registre du commerce et des sociétés de [ville] sous le numéro [SIREN/SIRET à compléter], dont le siège social est situé [adresse à compléter].',
+              'Numéro de TVA intracommunautaire : [FR00 000000000 à compléter].',
+              'Directeur de la publication : [nom à compléter].',
+              'Contact : [adresse e-mail à compléter].',
+            ],
+          },
+          {
+            heading: 'Hébergement',
+            paragraphs: [
+              'Le site est hébergé par [hébergeur à compléter], [adresse de l’hébergeur à compléter].',
+            ],
+          },
+          {
+            heading: 'Propriété intellectuelle',
+            paragraphs: [
+              'L’ensemble des contenus présents sur ce site (textes, images, logos, structure du configurateur 3D) est protégé par le droit de la propriété intellectuelle. Toute reproduction, même partielle, est soumise à autorisation préalable.',
+            ],
+          },
+          {
+            heading: 'Médiation de la consommation',
+            paragraphs: [
+              'Conformément aux articles L.616-1 et R.616-1 du Code de la consommation, [Raison sociale] propose un dispositif de médiation de la consommation. Le médiateur retenu est [nom du médiateur à compléter]. En cas de litige non résolu directement avec le service client, le consommateur peut déposer sa réclamation sur le site du médiateur : [adresse à compléter].',
+            ],
+          },
+        ],
+      },
+      cgv: {
+        title: 'Conditions générales de vente',
+        sections: [
+          {
+            heading: 'Champ d’application',
+            paragraphs: [
+              'Les présentes conditions générales de vente régissent les ventes de claviers mécaniques réalisées sur ce site, qu’il s’agisse d’un clavier du catalogue (configuration fixe) ou d’un clavier composé via le configurateur 3D (choix du châssis puis des switches et keycaps, position par position). Toute commande implique l’acceptation sans réserve des présentes conditions.',
+            ],
+          },
+          {
+            heading: 'Prix',
+            paragraphs: [
+              'Les prix sont indiqués en euros, toutes taxes comprises (TVA française au taux en vigueur, actuellement 20 %). Pour un clavier configuré sur mesure, le prix affiché pendant la configuration est indicatif : le montant définitif est recalculé au moment du paiement à partir des tarifs alors en vigueur, et c’est ce montant recalculé qui est facturé.',
+            ],
+          },
+          {
+            heading: 'Commande',
+            paragraphs: [
+              'La commande est validée après confirmation du panier et paiement intégral. Un e-mail de confirmation est envoyé à l’adresse renseignée. Aucune création de compte n’est nécessaire ; le suivi de commande se fait par lien direct transmis par e-mail.',
+            ],
+          },
+          {
+            heading: 'Paiement',
+            paragraphs: [
+              'Le paiement est traité par Stripe, prestataire de paiement tiers, par carte bancaire. Le site ne stocke aucune donnée de carte bancaire. Le paiement peut être soumis à une authentification forte du porteur (3D Secure) conformément à la réglementation européenne sur les services de paiement.',
+            ],
+          },
+          {
+            heading: 'Livraison',
+            paragraphs: [
+              'Les délais de livraison sont indicatifs : [délai à compléter]. La livraison est assurée par [transporteur à compléter] vers [zones desservies à compléter].',
+            ],
+          },
+          {
+            heading: 'Droit de rétractation',
+            paragraphs: [
+              'Conformément à l’article L.221-18 du Code de la consommation, le client dispose d’un délai de 14 jours à compter de la réception pour exercer son droit de rétractation sur un clavier du catalogue non personnalisé.',
+              'Ce droit ne s’applique pas aux claviers composés via le configurateur : en vertu de l’article L.221-28 3° du Code de la consommation, les biens confectionnés selon les spécifications du consommateur ou nettement personnalisés sont exclus du droit de rétractation. Cette information est rappelée au client avant le paiement de toute commande contenant un clavier configuré.',
+            ],
+          },
+          {
+            heading: 'Garanties légales',
+            paragraphs: [
+              'Tout produit vendu bénéficie de la garantie légale de conformité (articles L.217-3 et suivants du Code de la consommation) et de la garantie légale des vices cachés (articles 1641 et suivants du Code civil), sans supplément de prix.',
+            ],
+          },
+          {
+            heading: 'Droit applicable et litiges',
+            paragraphs: [
+              'Les présentes conditions sont soumises au droit français. En cas de litige, une solution amiable sera recherchée avant toute action judiciaire (voir Mentions légales — médiation de la consommation).',
+            ],
+          },
+        ],
+      },
+      confidentialite: {
+        title: 'Politique de confidentialité',
+        sections: [
+          {
+            heading: 'Responsable du traitement',
+            paragraphs: [
+              '[Raison sociale à compléter], éditeur du site, est responsable du traitement des données personnelles décrit ci-dessous. Contact : [adresse e-mail à compléter].',
+            ],
+          },
+          {
+            heading: 'Données collectées',
+            list: [
+              'identité (nom, prénom)',
+              'adresse de livraison et, si différente, de facturation',
+              'adresse e-mail et numéro de téléphone',
+              'détail de la configuration du clavier commandé (châssis, switches, keycaps choisis)',
+            ],
+            paragraphs: [
+              'Aucun compte client n’est créé : ces données sont associées à la commande, pas à un profil permanent.',
+            ],
+          },
+          {
+            heading: 'Finalités et base légale',
+            paragraphs: [
+              'Ces données sont utilisées pour traiter la commande, assurer la livraison et le service après-vente. Le traitement repose sur l’exécution du contrat de vente.',
+            ],
+          },
+          {
+            heading: 'Destinataires des données',
+            list: [
+              'Stripe, pour le traitement du paiement',
+              '[transporteur à compléter], pour la livraison',
+              'Resend, pour l’envoi de l’e-mail de confirmation de commande',
+            ],
+            paragraphs: [
+              'Ces prestataires n’accèdent qu’aux données strictement nécessaires à leur mission et ne sont pas autorisés à les réutiliser à d’autres fins.',
+            ],
+          },
+          {
+            heading: 'Durée de conservation',
+            paragraphs: [
+              'Les données de commande sont conservées [durée à compléter, ex. 5 ans — durée légale de conservation des pièces comptables et commerciales]. Les données d’un panier abandonné avant paiement sont supprimées automatiquement.',
+            ],
+          },
+          {
+            heading: 'Cookies',
+            paragraphs: [
+              'Ce site utilise des cookies strictement nécessaires (panier, session d’administration), déposés sans consentement préalable car indispensables au fonctionnement du site, ainsi que, avec le consentement du visiteur, des cookies de mesure d’audience. Voir le bandeau de gestion des cookies pour configurer vos préférences à tout moment.',
+            ],
+          },
+          {
+            heading: 'Vos droits',
+            list: [
+              'droit d’accès',
+              'droit de rectification',
+              'droit d’effacement',
+              'droit d’opposition',
+              'droit à la portabilité',
+            ],
+            paragraphs: [
+              'Pour exercer ces droits, contactez [adresse e-mail à compléter]. Vous disposez également du droit d’introduire une réclamation auprès de la CNIL (cnil.fr).',
+            ],
+          },
+          {
+            heading: 'Sécurité',
+            paragraphs: [
+              'Les mots de passe d’administration sont hachés et jamais stockés en clair. Les échanges avec le site sont chiffrés (HTTPS). Aucune donnée de carte bancaire ne transite par nos serveurs : le paiement est entièrement géré par Stripe.',
+            ],
+          },
+        ],
       },
     },
     admin: {

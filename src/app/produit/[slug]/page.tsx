@@ -29,7 +29,14 @@ async function getProduct(slug: string) {
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-  return { title: product?.name ?? slug };
+  if (!product) {
+    return { title: slug };
+  }
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: { title: product.name, description: product.description },
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

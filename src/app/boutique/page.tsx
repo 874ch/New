@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 
 export const metadata: Metadata = {
   title: fr.pages.shop.title,
+  description: fr.pages.shop.metaDescription,
 };
 
 export const revalidate = 60;

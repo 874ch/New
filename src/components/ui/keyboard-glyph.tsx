@@ -1,8 +1,10 @@
 import { cx } from '@/lib/cx';
 
 /**
- * Silhouette de clavier générique, utilisée tant qu'aucun rendu 3D / photo
- * produit n'existe (le rendu réel arrive en Phase 4 et Phase 6).
+ * Silhouette de clavier générique, utilisée sur le catalogue et les fiches
+ * produit tant qu'aucune photo produit n'existe (§13 Q8 — dépend du choix de
+ * marque). Le rendu 3D réel existe depuis la Phase 4, mais uniquement dans le
+ * configurateur : les vraies photos du catalogue restent à produire.
  */
 export function KeyboardGlyph({ className }: { className?: string }) {
   return (
