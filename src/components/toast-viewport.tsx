@@ -25,7 +25,7 @@ export function ToastViewport() {
         <div
           key={toast.id}
           role="status"
-          className="border-border bg-surface pointer-events-auto flex items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-lg animate-[toast-in_0.25s_ease-out]"
+          className="border-border bg-surface pointer-events-auto flex animate-[toast-in_0.25s_ease-out] items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-lg"
         >
           <span className="flex-1">{toast.message}</span>
           <button

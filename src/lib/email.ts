@@ -23,10 +23,14 @@ function renderOrderConfirmationHtml({ number, totalCents }: OrderConfirmationEm
  * (le webhook Stripe ne doit pas rejouer un événement déjà traité juste
  * parce que l'e-mail a échoué).
  */
-export async function sendOrderConfirmationEmail(input: OrderConfirmationEmailInput): Promise<void> {
+export async function sendOrderConfirmationEmail(
+  input: OrderConfirmationEmailInput,
+): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn(`RESEND_API_KEY absente — e-mail de confirmation non envoyé pour ${input.number}.`);
+    console.warn(
+      `RESEND_API_KEY absente — e-mail de confirmation non envoyé pour ${input.number}.`,
+    );
     return;
   }
 

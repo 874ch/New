@@ -44,11 +44,7 @@ export function SiteHeader() {
             className="hidden items-center gap-6 text-sm md:flex"
           >
             {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-foreground hover:text-accent"
-              >
+              <Link key={link.href} href={link.href} className="text-foreground hover:text-accent">
                 {link.label}
               </Link>
             ))}

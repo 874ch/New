@@ -10,42 +10,40 @@ export const contentType = 'image/png';
  */
 export default function OpengraphImage() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 24,
+        background: '#2b2115',
+        color: '#faf5ee',
+      }}
+    >
       <div
         style={{
-          width: '100%',
-          height: '100%',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 24,
-          background: '#2b2115',
-          color: '#faf5ee',
+          width: 96,
+          height: 96,
+          borderRadius: 20,
+          background: '#e35d24',
+          color: '#fff6ed',
+          fontSize: 56,
+          fontWeight: 700,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 96,
-            height: 96,
-            borderRadius: 20,
-            background: '#e35d24',
-            color: '#fff6ed',
-            fontSize: 56,
-            fontWeight: 700,
-          }}
-        >
-          K
-        </div>
-        <div style={{ fontSize: 56, fontWeight: 600 }}>Claviers Custom</div>
-        <div style={{ fontSize: 28, color: '#c9b8a0' }}>
-          Claviers mécaniques sur mesure, assemblés à la demande.
-        </div>
+        K
       </div>
-    ),
+      <div style={{ fontSize: 56, fontWeight: 600 }}>Claviers Custom</div>
+      <div style={{ fontSize: 28, color: '#c9b8a0' }}>
+        Claviers mécaniques sur mesure, assemblés à la demande.
+      </div>
+    </div>,
     size,
   );
 }

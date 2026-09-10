@@ -43,7 +43,12 @@ export function CookieBanner() {
           </Link>
         </p>
         <div className="flex shrink-0 gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => writeConsent('declined')}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => writeConsent('declined')}
+          >
             {fr.cookies.decline}
           </Button>
           <Button type="button" size="sm" onClick={() => writeConsent('accepted')}>

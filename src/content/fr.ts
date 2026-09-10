@@ -11,7 +11,8 @@ export const fr = {
   },
   cookies: {
     bannerLabel: 'Gestion des cookies',
-    message: 'Cookies essentiels (panier, session) et, avec votre accord, cookies de mesure d’audience.',
+    message:
+      'Cookies essentiels (panier, session) et, avec votre accord, cookies de mesure d’audience.',
     learnMore: 'En savoir plus',
     accept: 'Accepter',
     decline: 'Refuser',

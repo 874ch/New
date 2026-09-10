@@ -186,7 +186,11 @@ export function KeyboardScene({
       className={className}
       shadows={!degraded}
       dpr={degraded ? 1.25 : [1, 2]}
-      camera={{ fov: CAMERA_FOV_DEG, far: 400, position: [0, fallbackDistance * 0.5, fallbackDistance * 0.87] }}
+      camera={{
+        fov: CAMERA_FOV_DEG,
+        far: 400,
+        position: [0, fallbackDistance * 0.5, fallbackDistance * 0.87],
+      }}
       gl={{ antialias: true, toneMapping: ACESFilmicToneMapping }}
       scene={{ environmentIntensity: 0.85 }}
     >

@@ -1047,17 +1047,17 @@ public/
 À trancher avant les phases indiquées. Le défaut proposé s'applique en
 l'absence de réponse.
 
-| #   | Question                                                                                                                                           | Défaut proposé                                                                           | Bloque         |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------- |
-| 1   | **Frais de port** : fixes, offerts au-delà d'un montant, ou par transporteur ? Absent du brief.                                                    | forfait unique France, gratuit au-dessus de 150 €                                        | Phase 3        |
-| 2   | **TVA** : entreprise assujettie ? Les prix du brief (110 €, 2 €…) sont-ils TTC ?                                                                   | oui, prix TTC, TVA 20 % incluse                                                          | Phase 3        |
-| 3   | **Layout de lancement** : le cas canonique implique 80 positions. On part sur un unique layout « Compact 80 », ou plusieurs formats dès le début ? | un seul layout au lancement, modèle prévu pour plusieurs                                 | Phase 1 (seed) |
-| 4   | **Comptes clients** : nécessaires, ou paiement invité suffisant ?                                                                                  | paiement invité, suivi de commande par lien signé                                        | Phase 3        |
-| 5   | **Prix des claviers tout faits** (§4.7) : prix catalogue propre, ou somme des pièces ?                                                             | prix catalogue propre                                                                    | Phase 2        |
-| 6   | **Anglais** : prévu à court terme ? Ajouter `[locale]` après coup impose de restructurer le routage.                                               | FR uniquement, textes centralisés dans `src/content/fr.ts` pour rendre l'ajout mécanique | Phase 1        |
-| 7   | **E-mails transactionnels** : fournisseur ?                                                                                                        | Resend — décidé en Phase 3, implémenté en Phase 8 (`src/lib/email.ts`, oublié en Phase 3) | Phase 3        |
-| 8   | **Marque** : nom, logo, palette, photos produit.                                                                                                  | tokens neutres + silhouette générique (`KeyboardGlyph`) en attendant, remplaçables en un fichier — `Product.images` existe en base mais n'est pas encore lu par le front | Phase 2        |
-| 9   | **Statut de commande en cas d'écart de montant** (§6.5) : un statut dédié bloquant la fabrication ? Nécessite une migration du `enum OrderStatus`. | non implémenté — écart seulement loggé (`console.error`) dans le webhook, vérification manuelle | Phase 8+ (non traité) |
+| #   | Question                                                                                                                                           | Défaut proposé                                                                                                                                                           | Bloque                |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| 1   | **Frais de port** : fixes, offerts au-delà d'un montant, ou par transporteur ? Absent du brief.                                                    | forfait unique France, gratuit au-dessus de 150 €                                                                                                                        | Phase 3               |
+| 2   | **TVA** : entreprise assujettie ? Les prix du brief (110 €, 2 €…) sont-ils TTC ?                                                                   | oui, prix TTC, TVA 20 % incluse                                                                                                                                          | Phase 3               |
+| 3   | **Layout de lancement** : le cas canonique implique 80 positions. On part sur un unique layout « Compact 80 », ou plusieurs formats dès le début ? | un seul layout au lancement, modèle prévu pour plusieurs                                                                                                                 | Phase 1 (seed)        |
+| 4   | **Comptes clients** : nécessaires, ou paiement invité suffisant ?                                                                                  | paiement invité, suivi de commande par lien signé                                                                                                                        | Phase 3               |
+| 5   | **Prix des claviers tout faits** (§4.7) : prix catalogue propre, ou somme des pièces ?                                                             | prix catalogue propre                                                                                                                                                    | Phase 2               |
+| 6   | **Anglais** : prévu à court terme ? Ajouter `[locale]` après coup impose de restructurer le routage.                                               | FR uniquement, textes centralisés dans `src/content/fr.ts` pour rendre l'ajout mécanique                                                                                 | Phase 1               |
+| 7   | **E-mails transactionnels** : fournisseur ?                                                                                                        | Resend — décidé en Phase 3, implémenté en Phase 8 (`src/lib/email.ts`, oublié en Phase 3)                                                                                | Phase 3               |
+| 8   | **Marque** : nom, logo, palette, photos produit.                                                                                                   | tokens neutres + silhouette générique (`KeyboardGlyph`) en attendant, remplaçables en un fichier — `Product.images` existe en base mais n'est pas encore lu par le front | Phase 2               |
+| 9   | **Statut de commande en cas d'écart de montant** (§6.5) : un statut dédié bloquant la fabrication ? Nécessite une migration du `enum OrderStatus`. | non implémenté — écart seulement loggé (`console.error`) dans le webhook, vérification manuelle                                                                          | Phase 8+ (non traité) |
 
 ---
 
@@ -1229,3 +1229,36 @@ passionnés (claviers aujourd'hui, souris/tapis plus tard).
 Aucun changement de comportement : uniquement des valeurs de couleur/police et
 quelques classes utilitaires. `npm test`, `npx tsc --noEmit` et un build de
 production complets restent verts après coup.
+
+## 18. Audit fonctionnel post-identité visuelle
+
+Passe de bout en bout sur le site construit (`next build` + `next start`),
+via Playwright piloté par script plutôt que de simples captures d'écran —
+clics, changements d'état et lecture du DOM réel, pas seulement l'apparence.
+Parcours vérifiés : accueil → boutique → fiche produit (changement de
+variante, prix qui suit) → ajout au panier (notification) → panier
+(quantité +/-, retrait automatique à 0, retrait explicite) ; configurateur
+complet (châssis → switches avec peinture/annuler/rétablir/retrait
+rapide/remplissage → keycaps → récapitulatif → ajout au panier) ; case de
+consentement build sur-mesure (n'apparaît que si le panier contient un
+`CUSTOM_BUILD`, bloque bien la soumission tant qu'elle n'est pas cochée) ;
+connexion admin (bons et mauvais identifiants) ; pages légales ; bandeau
+cookies (accepter/refuser, persistance, ne se réaffiche pas) ; page 404 ;
+`sitemap.xml`/`robots.txt` ; navigation mobile. Aucune erreur console ni
+requête en échec sur l'ensemble de ces parcours.
+
+Un vrai bug trouvé et corrigé : dans la vue 2D (`keyboard-top-view.tsx`), le
+contour entre touches était une couleur sombre fixe — quasi invisible sur
+une keycap/switch de couleur sombre (ex. « noir »), les touches se
+fondaient en un seul bloc. Cette vue étant à la fois le repli tactile et
+l'alternative accessible au canvas 3D (§9.5), la lisibilité des cases
+individuelles n'est pas cosmétique. Corrigé par `strokeFor()` : le contour
+choisit clair ou sombre selon la luminance relative de la couleur posée,
+plutôt qu'une valeur fixe.
+
+Non testé ici, faute de vraie clé Stripe dans cet environnement (`.env`
+local a `STRIPE_SECRET_KEY=""`) : la redirection réelle vers Stripe
+Checkout. Le parcours a déjà été validé en conditions réelles lors du
+déploiement Vercel (§15) avec de vraies clés ; l'absence de clé locale
+produit une erreur claire (« Variable d'environnement manquante ») plutôt
+qu'un échec silencieux, ce qui est le comportement attendu hors production.
