@@ -1087,10 +1087,14 @@ spécifiquement, tout autre hébergeur Node fonctionne pour le reste).
    (Vercel Postgres, Neon, Supabase…). Renseigner `DATABASE_URL` (chaîne
    poolée, `pgbouncer=true`) et `DIRECT_URL` (chaîne directe, pour les
    migrations) — voir §6.6 et `.env.example`.
-2. **Migrations et amorçage** — `npx prisma migrate deploy` (jamais
-   `migrate dev` en production, interactif). Puis `npm run db:seed` : sans
-   danger à rejouer, toutes les écritures du script sont des `upsert`
-   (layout, catalogue, produit, **et** le compte admin).
+2. **Migrations et amorçage** — le script `build` (`package.json`) enchaîne
+   `prisma migrate deploy` puis `prisma db seed` avant `next build` : Vercel
+   les exécute donc lui-même à chaque déploiement, avec les identifiants de
+   base qu'il a déjà. Choix fait en Phase 8 face à un déploiement sans accès
+   CLI (uniquement le tableau de bord Vercel) : sans danger à rejouer, toutes
+   les écritures du seed sont des `upsert` (layout, catalogue, produit,
+   **et** le compte admin). Sur un hébergeur avec accès CLI, ces deux
+   commandes peuvent tout aussi bien rester des étapes manuelles séparées.
 3. **Compte admin** — renseigner `ADMIN_EMAIL`/`ADMIN_PASSWORD` avant le seed
    initial ; peuvent être retirés de l'environnement une fois le compte admin
    créé (aucune inscription publique n'existe, le seed ne les relit pas si le
