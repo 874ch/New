@@ -6,19 +6,24 @@ import type { BufferGeometry } from 'three';
 import { KeyInstances } from '@/components/configurator/scene/key-instances';
 import { KeyLabels } from '@/components/configurator/scene/key-labels';
 import {
+  BOTTOM_SHELL_HEIGHT,
+  CASE_DESIGN_HEIGHT_U,
+  CASE_DESIGN_WIDTH_U,
   CHASSIS_KNOB_MARGIN,
   CHASSIS_KNOB_RADIUS,
   CHASSIS_MARGIN,
-  CHASSIS_RIM_HEIGHT,
   LEVELS,
+  PLATE_THICKNESS,
   SWITCH_STEM_HEIGHT,
+  TOP_SHELL_HEIGHT,
+  createBottomShellGeometry,
   createChassisKnobGeometry,
   createChassisPlateGeometry,
-  createChassisRimGeometry,
   createKeycapGeometry,
   createSlotGeometry,
   createSwitchHousingGeometry,
   createSwitchStemGeometry,
+  createTopShellGeometry,
 } from '@/components/configurator/scene/geometry';
 import { relativeLuminance } from '@/lib/color';
 import { useConfiguratorStore } from '@/lib/configurator/store';
@@ -70,30 +75,42 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
   const switchColors = useMemo(() => colorMap(catalog.switches), [catalog.switches]);
   const keycapColors = useMemo(() => colorMap(catalog.keycaps), [catalog.keycaps]);
 
-  const plateGeometry = useDisposable(
-    useMemo(
-      () => createChassisPlateGeometry(layout.keys, layout.widthU, layout.heightU),
-      [layout.keys, layout.widthU, layout.heightU],
-    ),
-  );
-  const rimGeometry = useDisposable(
-    useMemo(
-      () => createChassisRimGeometry(layout.widthU, layout.heightU),
-      [layout.widthU, layout.heightU],
-    ),
-  );
+  // La plaque, la coque haute et la coque basse sont taillées dans Blender
+  // pour le layout compact-80 (17,5 × 6 u) — pas des géométries paramétriques
+  // comme le reste. Un layout d'une autre taille rendrait un boîtier mal
+  // ajusté plutôt que de planter ; ça vaut un avertissement en développement
+  // plutôt qu'un échec silencieux.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (
+      Math.abs(layout.widthU - CASE_DESIGN_WIDTH_U) > 1e-6 ||
+      Math.abs(layout.heightU - CASE_DESIGN_HEIGHT_U) > 1e-6
+    ) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[KeyboardModel] Le boîtier Blender (plaque/coque haute/coque basse) a été taillé pour un ` +
+          `layout de ${CASE_DESIGN_WIDTH_U}×${CASE_DESIGN_HEIGHT_U}u, mais "${layout.slug}" mesure ` +
+          `${layout.widthU}×${layout.heightU}u. Le boîtier affiché ne correspondra pas exactement — ` +
+          `voir le commentaire d'en-tête de geometry.ts.`,
+      );
+    }
+  }, [layout.slug, layout.widthU, layout.heightU]);
+
+  const plateGeometry = useDisposable(useMemo(() => createChassisPlateGeometry(), []));
+  const topShellGeometry = useDisposable(useMemo(() => createTopShellGeometry(), []));
+  const bottomShellGeometry = useDisposable(useMemo(() => createBottomShellGeometry(), []));
   const slotGeometry = useDisposable(useMemo(() => createSlotGeometry(), []));
   const housingGeometry = useDisposable(useMemo(() => createSwitchHousingGeometry(), []));
   const stemGeometry = useDisposable(useMemo(() => createSwitchStemGeometry(), []));
   const knobGeometry = useDisposable(useMemo(() => createChassisKnobGeometry(), []));
 
-  /** Coin arrière-droit du cadre : X vers la droite, Z vers l'avant (§9 geometry.ts). */
+  /** Coin arrière-droit de la coque haute : X vers la droite, Z vers l'avant (§9 geometry.ts). */
   const knobPosition = useMemo((): [number, number, number] => {
     const halfWidth = layout.widthU / 2 + CHASSIS_MARGIN;
     const halfDepth = layout.heightU / 2 + CHASSIS_MARGIN;
     return [
       halfWidth - CHASSIS_KNOB_RADIUS - CHASSIS_KNOB_MARGIN,
-      CHASSIS_RIM_HEIGHT,
+      TOP_SHELL_HEIGHT,
       -halfDepth + CHASSIS_KNOB_RADIUS + CHASSIS_KNOB_MARGIN,
     ];
   }, [layout.widthU, layout.heightU]);
@@ -124,11 +141,14 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
 
   return (
     <group>
-      <mesh geometry={plateGeometry} receiveShadow castShadow>
+      <mesh geometry={plateGeometry} position={[0, -PLATE_THICKNESS, 0]} receiveShadow castShadow>
         <meshStandardMaterial color={chassisColor} roughness={0.45} metalness={0.6} />
       </mesh>
-      <mesh geometry={rimGeometry} receiveShadow castShadow>
+      <mesh geometry={topShellGeometry} receiveShadow castShadow>
         <meshStandardMaterial color={chassisColor} roughness={0.35} metalness={0.7} />
+      </mesh>
+      <mesh geometry={bottomShellGeometry} position={[0, -BOTTOM_SHELL_HEIGHT, 0]} receiveShadow castShadow>
+        <meshStandardMaterial color={chassisColor} roughness={0.4} metalness={0.65} />
       </mesh>
       <mesh geometry={knobGeometry} position={knobPosition} receiveShadow castShadow>
         <meshStandardMaterial color={chassisColor} roughness={0.3} metalness={0.75} />

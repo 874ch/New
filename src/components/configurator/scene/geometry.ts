@@ -1,7 +1,9 @@
 import { BufferAttribute, BufferGeometry, ExtrudeGeometry, Shape } from 'three';
 
 import {
+  GEOM_BOTTOM_SHELL,
   GEOM_CHASSIS_KNOB,
+  GEOM_CHASSIS_PLATE,
   GEOM_KEYCAP_1U,
   GEOM_KEYCAP_1_25U,
   GEOM_KEYCAP_1_5U,
@@ -12,6 +14,7 @@ import {
   GEOM_SLOT,
   GEOM_SWITCH_HOUSING,
   GEOM_SWITCH_STEM,
+  GEOM_TOP_SHELL,
   type PieceGeometryData,
 } from '@/components/configurator/scene/geometry-data.generated';
 
@@ -33,15 +36,18 @@ import {
  * GLTFLoader que celui qu'utiliserait le navigateur — pas de parseur maison,
  * pas de risque de divergence sur la conversion d'axes ou la triangulation.
  *
- * La plaque de montage et le cadre du châssis restent procéduraux
- * (ExtrudeGeometry) : leurs dimensions dépendent du layout choisi en base
- * (largeur/profondeur variables), alors qu'un GLB est un maillage figé — les
- * garder procéduraux garantit un contour exact à n'importe quelle taille. La
- * plaque perce désormais un trou par position de touche (style plaque de
- * switch CNC), calculé depuis les vraies coordonnées du layout — toujours
- * procédural, pour la même raison. La molette rotative décorative, elle, a
- * une taille fixe indépendante du layout : c'est un modèle Blender comme les
- * autres, posé une fois dans un coin du châssis.
+ * Plaque de montage, coque haute et coque basse viennent elles aussi de
+ * `assets/blender/keyboard-case.blend` (boîtier gasket-mount 75 %, inspiré du
+ * MonsGeek M1 V3 — chanfreins CNC, plaque à 80 découpes réelles). Contrairement
+ * aux keycaps/switches, ce ne sont **pas** des pièces génériques réutilisables
+ * à n'importe quelle taille de layout : elles sont taillées sur mesure pour
+ * le layout « compact-80 » actuel (`CASE_DESIGN_WIDTH_U`/`CASE_DESIGN_HEIGHT_U`
+ * ci-dessous, 17,5 × 6 u + `CHASSIS_MARGIN`), exactement comme un vrai boîtier
+ * usiné CNC est taillé pour un PCB précis — pas un rectangle générique qu'on
+ * étire. Si le layout change de dimensions un jour, ces trois pièces doivent
+ * être remodélisées (voir `KeyboardModel` pour l'avertissement de
+ * développement qui le signale). La molette rotative décorative a une taille
+ * fixe indépendante du layout — seule sa position en dépend.
  *
  * Unités : 1 = un pas de touche (19,05 mm dans la réalité).
  * Repère : X vers la droite, Z vers l'avant (rangée 0 au fond), Y vers le haut.
@@ -56,13 +62,28 @@ export const KEYCAP_HEIGHT = 0.5;
 export const SWITCH_HOUSING_SIZE = 0.74;
 export const SWITCH_HOUSING_HEIGHT = 0.3;
 export const SWITCH_STEM_HEIGHT = 0.14;
-export const PLATE_THICKNESS = 0.16;
 export const CHASSIS_MARGIN = 0.55;
-export const CHASSIS_RIM_HEIGHT = 0.34;
 export const CHASSIS_KNOB_RADIUS = 0.62;
 export const CHASSIS_KNOB_HEIGHT = 0.44;
-/** Marge entre le bord du cadre et la molette, dans le coin arrière-droit. */
+/** Marge entre le bord de la coque haute et la molette, dans le coin arrière-droit. */
 export const CHASSIS_KNOB_MARGIN = 0.12;
+
+/**
+ * Dimensions du layout pour lequel le boîtier (plaque, coque haute, coque
+ * basse) a été modélisé dans Blender — le layout « compact-80 » actuel
+ * (17,5 × 6 u, vérifié depuis `prisma/seed.ts`). Sert uniquement à avertir en
+ * développement si le layout chargé ne correspond plus à ce pour quoi le
+ * boîtier a été taillé (voir `KeyboardModel`) ; ne pilote aucune géométrie.
+ */
+export const CASE_DESIGN_WIDTH_U = 17.5;
+export const CASE_DESIGN_HEIGHT_U = 6;
+
+/** Épaisseur de la plaque de montage (modèle Blender, ~1,5 mm). */
+export const PLATE_THICKNESS = 0.08;
+/** Hauteur de la coque haute, du plan de la plaque jusqu'au sommet du biseau. */
+export const TOP_SHELL_HEIGHT = 0.434;
+/** Hauteur de la coque basse, du sol jusqu'au plan de la plaque. */
+export const BOTTOM_SHELL_HEIGHT = 1.3;
 
 /** Y de la base de chaque étage, plaque de montage à Y = 0. */
 export const LEVELS = {
@@ -92,32 +113,23 @@ const KEYCAP_GEOMETRY_BY_WIDTH: Readonly<Record<string, PieceGeometryData>> = {
   '6.25': GEOM_KEYCAP_6_25U,
 };
 
-function roundedRectShape(width: number, depth: number, radius: number, cx = 0, cz = 0): Shape {
+function roundedRectShape(width: number, depth: number, radius: number): Shape {
   const w = width / 2;
   const d = depth / 2;
   const r = Math.min(radius, w, d);
   const shape = new Shape();
 
-  shape.moveTo(cx - w + r, cz - d);
-  shape.lineTo(cx + w - r, cz - d);
-  shape.quadraticCurveTo(cx + w, cz - d, cx + w, cz - d + r);
-  shape.lineTo(cx + w, cz + d - r);
-  shape.quadraticCurveTo(cx + w, cz + d, cx + w - r, cz + d);
-  shape.lineTo(cx - w + r, cz + d);
-  shape.quadraticCurveTo(cx - w, cz + d, cx - w, cz + d - r);
-  shape.lineTo(cx - w, cz - d + r);
-  shape.quadraticCurveTo(cx - w, cz - d, cx - w + r, cz - d);
+  shape.moveTo(-w + r, -d);
+  shape.lineTo(w - r, -d);
+  shape.quadraticCurveTo(w, -d, w, -d + r);
+  shape.lineTo(w, d - r);
+  shape.quadraticCurveTo(w, d, w - r, d);
+  shape.lineTo(-w + r, d);
+  shape.quadraticCurveTo(-w, d, -w, d - r);
+  shape.lineTo(-w, -d + r);
+  shape.quadraticCurveTo(-w, -d, -w + r, -d);
 
   return shape;
-}
-
-interface HoleOptions {
-  width: number;
-  depth: number;
-  radius?: number;
-  /** Centre du trou, par défaut (0, 0). */
-  x?: number;
-  z?: number;
 }
 
 interface SlabOptions {
@@ -126,10 +138,6 @@ interface SlabOptions {
   height: number;
   radius?: number;
   bevel?: number;
-  bevelSegments?: number;
-  curveSegments?: number;
-  /** Trous rectangulaires (cadre du châssis, ou un par position de touche pour la plaque). */
-  holes?: readonly HoleOptions[];
 }
 
 /**
@@ -137,31 +145,9 @@ interface SlabOptions {
  * Le biseau d'ExtrudeGeometry déborde du contour : on le compense pour que
  * les dimensions demandées soient les dimensions finales.
  */
-function createSlabGeometry({
-  width,
-  depth,
-  height,
-  radius = 0.08,
-  bevel = 0.02,
-  bevelSegments = 2,
-  curveSegments = 3,
-  holes,
-}: SlabOptions): BufferGeometry {
+function createSlabGeometry({ width, depth, height, radius = 0.08, bevel = 0.02 }: SlabOptions): BufferGeometry {
   const b = Math.min(bevel, height / 2 - 0.001, width / 2 - 0.001, depth / 2 - 0.001);
   const shape = roundedRectShape(width - 2 * b, depth - 2 * b, Math.max(radius - b, 0.005));
-
-  if (holes) {
-    for (const hole of holes) {
-      const holeShape = roundedRectShape(
-        hole.width,
-        hole.depth,
-        hole.radius ?? 0.05,
-        hole.x ?? 0,
-        hole.z ?? 0,
-      );
-      shape.holes.push(holeShape);
-    }
-  }
 
   const geometry = new ExtrudeGeometry(shape, {
     depth: height - 2 * b,
@@ -169,8 +155,8 @@ function createSlabGeometry({
     bevelThickness: b,
     bevelSize: b,
     bevelOffset: 0,
-    bevelSegments,
-    curveSegments,
+    bevelSegments: 2,
+    curveSegments: 3,
   });
 
   // ExtrudeGeometry travaille dans le plan XY et extrude sur Z : on bascule
@@ -254,68 +240,41 @@ export function createSlotGeometry(): BufferGeometry {
   return buildGeometryFromData(GEOM_SLOT);
 }
 
-/** Position d'une touche, juste ce qu'il faut pour percer son trou dans la plaque. */
-interface KeyPositionLike {
-  x: number;
-  y: number;
-  widthU: number;
-  heightU: number;
-}
-
 /**
- * Plaque de montage : le plateau sur lequel reposent les switches, percé d'un
- * trou par position de touche (comme une vraie plaque CNC), pas un plateau
- * plein. Le trou est calculé depuis les vraies coordonnées du layout, avec la
- * même conversion « origine en haut à gauche → centrée » que
- * `keyScenePosition` dans key-instances.tsx : les deux doivent rester en
- * phase, sinon les trous ne tombent plus sous les switches.
+ * Plaque de montage : modèle Blender, 80 découpes réelles (une par position
+ * du layout compact-80, footprint switch 14×14 mm) percées directement dans
+ * le modèle plutôt qu'en code — voir le commentaire d'en-tête du fichier sur
+ * pourquoi cette pièce n'est plus paramétrique. Base à Y = 0 comme les autres
+ * pièces Blender ; `keyboard-model.tsx` la translate de `-PLATE_THICKNESS`
+ * pour amener sa face supérieure au niveau Y = 0 (`LEVELS.plateTop`).
  */
-export function createChassisPlateGeometry(
-  keys: readonly KeyPositionLike[],
-  widthU: number,
-  depthU: number,
-): BufferGeometry {
-  const holes = keys.map((key) => ({
-    width: SWITCH_HOUSING_SIZE,
-    depth: SWITCH_HOUSING_SIZE,
-    radius: 0.07,
-    x: key.x + key.widthU / 2 - widthU / 2,
-    z: key.y + key.heightU / 2 - depthU / 2,
-  }));
-
-  const geometry = createSlabGeometry({
-    width: widthU + 2 * CHASSIS_MARGIN,
-    depth: depthU + 2 * CHASSIS_MARGIN,
-    height: PLATE_THICKNESS,
-    radius: 0.3,
-    bevel: 0.03,
-    bevelSegments: 3,
-    curveSegments: 4,
-    holes,
-  });
-  geometry.translate(0, -PLATE_THICKNESS, 0);
-  return geometry;
-}
-
-/** Cadre du châssis : le rebord qui entoure la zone des touches, chanfreins nets façon CNC. */
-export function createChassisRimGeometry(widthU: number, depthU: number): BufferGeometry {
-  return createSlabGeometry({
-    width: widthU + 2 * CHASSIS_MARGIN,
-    depth: depthU + 2 * CHASSIS_MARGIN,
-    height: CHASSIS_RIM_HEIGHT,
-    radius: 0.3,
-    bevel: 0.045,
-    bevelSegments: 4,
-    curveSegments: 4,
-    holes: [{ width: widthU + 0.12, depth: depthU + 0.12, radius: 0.08 }],
-  });
+export function createChassisPlateGeometry(): BufferGeometry {
+  return buildGeometryFromData(GEOM_CHASSIS_PLATE);
 }
 
 /**
- * Molette rotative décorative posée dans le coin arrière-droit du cadre —
- * purement esthétique, aucune fonction dans le configurateur aujourd'hui.
- * Taille fixe (modèle Blender), contrairement à la plaque et au cadre : elle
- * ne dépend pas des dimensions du layout, seule sa position en dépend.
+ * Coque haute : le cadre biseauté façon CNC qui entoure la zone des touches,
+ * inspiré d'un boîtier gasket-mount 75 % (MonsGeek M1 V3). Base à Y = 0,
+ * posée directement au niveau de la plaque.
+ */
+export function createTopShellGeometry(): BufferGeometry {
+  return buildGeometryFromData(GEOM_TOP_SHELL);
+}
+
+/**
+ * Coque basse : le corps du boîtier sous la plaque, jusqu'au sol. Base à
+ * Y = 0 ; `keyboard-model.tsx` la translate de `-BOTTOM_SHELL_HEIGHT` pour
+ * que son sommet touche le niveau de la plaque.
+ */
+export function createBottomShellGeometry(): BufferGeometry {
+  return buildGeometryFromData(GEOM_BOTTOM_SHELL);
+}
+
+/**
+ * Molette rotative décorative posée dans le coin arrière-droit de la coque
+ * haute — purement esthétique, aucune fonction dans le configurateur
+ * aujourd'hui. Taille fixe, contrairement au reste du boîtier : elle ne
+ * dépend pas des dimensions du layout, seule sa position en dépend.
  */
 export function createChassisKnobGeometry(): BufferGeometry {
   return buildGeometryFromData(GEOM_CHASSIS_KNOB);

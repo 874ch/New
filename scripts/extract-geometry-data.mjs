@@ -1,5 +1,5 @@
-// Script one-shot : charge assets/blender/keyboard-parts.glb avec le GLTFLoader
-// de three.js et exporte la géométrie de chaque pièce (attributs position et
+// Script one-shot : charge les GLB de assets/blender/ avec le GLTFLoader de
+// three.js et exporte la géométrie de chaque pièce (attributs position et
 // normal, indices) dans src/components/configurator/scene/geometry-data.generated.ts.
 //
 // Pourquoi ce détour : geometry.ts doit rester synchrone (BufferGeometry
@@ -17,24 +17,34 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
-const glbPath = path.join(repoRoot, 'assets/blender/keyboard-parts.glb');
 const outPath = path.join(
   repoRoot,
   'src/components/configurator/scene/geometry-data.generated.ts',
 );
 
-const EXPECTED_NAMES = [
-  'keycap_1u',
-  'keycap_1_25u',
-  'keycap_1_5u',
-  'keycap_1_75u',
-  'keycap_2u',
-  'keycap_2_25u',
-  'keycap_6_25u',
-  'switch_housing',
-  'switch_stem',
-  'slot',
-  'chassis_knob',
+// keyboard-case.glb (coque haute, coque basse, plaque, molette) fait autorité
+// sur `chassis_knob` : c'est la molette proportionnée pour CE boîtier, elle
+// remplace celle historiquement présente dans keyboard-parts.glb.
+const SOURCES = [
+  {
+    file: 'assets/blender/keyboard-parts.glb',
+    names: [
+      'keycap_1u',
+      'keycap_1_25u',
+      'keycap_1_5u',
+      'keycap_1_75u',
+      'keycap_2u',
+      'keycap_2_25u',
+      'keycap_6_25u',
+      'switch_housing',
+      'switch_stem',
+      'slot',
+    ],
+  },
+  {
+    file: 'assets/blender/keyboard-case.glb',
+    names: ['chassis_plate', 'top_shell', 'bottom_shell', 'chassis_knob'],
+  },
 ];
 
 function roundArray(typedArray, decimals = 5) {
@@ -46,53 +56,60 @@ function roundArray(typedArray, decimals = 5) {
   return out;
 }
 
-async function main() {
+async function loadGltf(glbPath) {
   const buffer = await readFile(glbPath);
   const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-
   const loader = new GLTFLoader();
-  const gltf = await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     loader.parse(arrayBuffer, '', resolve, reject);
   });
+}
 
-  const meshByName = new Map();
-  gltf.scene.traverse((obj) => {
-    if (obj.isMesh) meshByName.set(obj.name, obj);
-  });
-
-  const missing = EXPECTED_NAMES.filter((name) => !meshByName.has(name));
-  if (missing.length > 0) {
-    throw new Error(`Objets manquants dans le GLB : ${missing.join(', ')}`);
-  }
-
+async function main() {
   const entries = [];
-  for (const name of EXPECTED_NAMES) {
-    const mesh = meshByName.get(name);
-    const geometry = mesh.geometry;
-    const position = geometry.getAttribute('position');
-    const normal = geometry.getAttribute('normal');
-    const index = geometry.getIndex();
 
-    if (!position || !normal || !index) {
-      throw new Error(`Géométrie incomplète pour "${name}" (position/normal/index requis)`);
+  for (const source of SOURCES) {
+    const glbPath = path.join(repoRoot, source.file);
+    const gltf = await loadGltf(glbPath);
+
+    const meshByName = new Map();
+    gltf.scene.traverse((obj) => {
+      if (obj.isMesh) meshByName.set(obj.name, obj);
+    });
+
+    const missing = source.names.filter((name) => !meshByName.has(name));
+    if (missing.length > 0) {
+      throw new Error(`Objets manquants dans ${source.file} : ${missing.join(', ')}`);
     }
 
-    entries.push({
-      name,
-      position: roundArray(position.array),
-      normal: roundArray(normal.array),
-      index: Array.from(index.array),
-      vertexCount: position.count,
-      triangleCount: index.count / 3,
-    });
+    for (const name of source.names) {
+      const mesh = meshByName.get(name);
+      const geometry = mesh.geometry;
+      const position = geometry.getAttribute('position');
+      const normal = geometry.getAttribute('normal');
+      const index = geometry.getIndex();
+
+      if (!position || !normal || !index) {
+        throw new Error(`Géométrie incomplète pour "${name}" (position/normal/index requis)`);
+      }
+
+      entries.push({
+        name,
+        position: roundArray(position.array),
+        normal: roundArray(normal.array),
+        index: Array.from(index.array),
+        vertexCount: position.count,
+        triangleCount: index.count / 3,
+      });
+    }
   }
 
   const totalTris = entries.reduce((sum, e) => sum + e.triangleCount, 0);
 
   const banner = `/**
  * Généré par scripts/extract-geometry-data.mjs à partir de
- * assets/blender/keyboard-parts.glb — NE PAS ÉDITER À LA MAIN.
- * Pour régénérer après une modification du modèle Blender :
+ * ${SOURCES.map((s) => s.file).join(' et ')} — NE PAS ÉDITER À LA MAIN.
+ * Pour régénérer après une modification d'un modèle Blender :
  *   node scripts/extract-geometry-data.mjs
  *
  * Triangles totaux (géométries distinctes) : ${totalTris}

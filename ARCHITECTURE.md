@@ -803,21 +803,71 @@ prix en mars.
 > comme repli plutôt que supprimée — un layout futur avec une largeur inédite
 > reste rendu correctement.
 >
-> **La plaque de montage et le cadre du châssis restent procéduraux** : leurs
+> **La plaque de montage et le cadre du châssis restent procéduraux** : ~~leurs
 > dimensions dépendent du layout choisi en base (largeur/profondeur
-> variables), un GLB est un maillage figé. La plaque perce désormais un trou
-> par position de touche (calculé depuis les vraies coordonnées du layout,
-> footprint du boîtier de switch) au lieu d'être pleine — look plaque de
-> montage réelle, toujours 100 % paramétrique. Une **molette rotative
-> décorative** (aucune fonction dans le configurateur) a été ajoutée dans le
-> coin arrière-droit du cadre : taille fixe donc modèle Blender comme les
-> autres pièces, seule sa position dépend du layout.
+> variables), un GLB est un maillage figé.~~ **Périmé, voir §9.0 ter** : sur
+> demande explicite du client, la plaque et le cadre (rebaptisé coque haute)
+> sont devenus des modèles Blender figés, taillés sur mesure pour le layout
+> actuel plutôt que génériques. Une **molette rotative décorative** (aucune
+> fonction dans le configurateur) a été ajoutée dans le coin arrière-droit —
+> ce choix-là reste valable, seule sa hauteur de référence a changé (coque
+> haute au lieu de cadre).
 >
-> **Poly count** : ~7 500 triangles au total pour les 11 géométries
-> distinctes (keycaps ×7, boîtier, tige, slot, molette) — bien en dessous du
-> budget §10, y compris une fois instancié sur un clavier de 80 touches.
-> Nombre de draw calls inchangé pour le châssis (toujours 3 `Mesh` : plaque,
-> cadre, molette — dans la fourchette « 2–3 » déjà prévue au tableau de §9.3).
+> **Poly count** (pièces de §9.0 bis uniquement, keycaps ×7 + boîtier + tige +
+> slot) : ~7 500 triangles — bien en dessous du budget §10.
+
+### 9.0 ter Boîtier gasket-mount 75 % (plaque, coque haute, coque basse)
+
+> Demande client explicite, avec référence visuelle (photos MonsGeek M1 V3)
+> et cotes réelles du secteur (pas de touche 19,05 mm, découpe plaque
+> 14×14 mm, épaisseurs PCB/plaque typiques, encodeur EC11). Remplace la
+> plaque et le cadre procéduraux de §9.0 bis par trois modèles Blender —
+> plaque de montage, coque haute (le cadre biseauté), coque basse (le corps
+> sous la plaque, nouveau — absent de toute version antérieure) — plus la
+> molette déjà existante, repositionnée sur la coque haute. Source dans
+> `assets/blender/keyboard-case.blend`, exporté vers
+> `assets/blender/keyboard-case.glb`, extrait par le même
+> `scripts/extract-geometry-data.mjs` que §9.0 bis (les deux fichiers GLB y
+> sont listés séparément, avec leurs objets attendus respectifs).
+>
+> **Rupture assumée avec le principe « procédural = paramétrique » de
+> §9.0/9.0 bis** : contrairement aux keycaps/switches, ces trois pièces ne
+> sont **pas** génériques. Elles sont taillées pour le layout « compact-80 »
+> actuel (17,5 × 6 u + `CHASSIS_MARGIN`, `CASE_DESIGN_WIDTH_U`/
+> `CASE_DESIGN_HEIGHT_U` dans `geometry.ts`) — la plaque a 80 découpes
+> percées directement dans le modèle aux vraies coordonnées du layout, pas un
+> trou générique par position calculé en code. C'est délibéré : un boîtier
+> CNC réel est usiné pour un PCB précis, pas un rectangle qu'on étire. Si le
+> layout change un jour de dimensions, ces trois pièces doivent être
+> remodélisées — `KeyboardModel` avertit en développement
+> (`console.warn`) si le layout chargé ne correspond plus aux dimensions de
+> conception, plutôt que d'afficher silencieusement un boîtier mal ajusté.
+>
+> **Dimensions retenues** (converties en unités clavier, 1 u = 19,05 mm) :
+> hauteur totale du boîtier ≈ 32,8 mm (visé : 33 mm, cote officielle
+> MonsGeek), empreinte 354 × 135 mm (dérivée du layout réel, pas des
+> 332 × 147 mm du board de référence qui a un layout différent). Répartition
+> hauteur (non publiée, estimée à l'œil sur les photos) : coque basse
+> 1,3 u (~24,8 mm dont un pied inséré de 0,1 u), plaque 0,08 u (~1,5 mm,
+> cote PC officielle), coque haute 0,434 u (~8,3 mm). Angle de frappe non
+> implémenté (coque plate) — aurait demandé d'incliner aussi le plan des
+> switches/keycaps, changement plus large que ce qui a été demandé.
+>
+> **Plaque à 80 trous** : les 80 découpes (14×14 mm, rayon de coin 0,07 u)
+> sont percées par un *boolean* Blender (une seule opération sur un objet
+> fusionnant les 80 découpeurs, plutôt que 80 opérations séparées) puis
+> nettoyées avec `dissolve_limit` — le solveur *Exact* de Blender laisse une
+> triangulation résiduelle sur les grandes zones entre les trous, qui
+> ressort comme un motif en éventail sous ombrage lisse (`shade_smooth`) et
+> reste visible même en ombrage plat sans ce nettoyage. Ombrage plat retenu
+> pour la plaque (pièce usinée, pas de courbe organique à lisser).
+>
+> **Poly count** : plaque 8 320 triangles, coque haute 5 136, coque basse
+> 952 — total boîtier 14 960 (molette 552 déjà comptée en §9.0 bis). Toujours
+> largement sous le budget §10 même en ajoutant les ~7 500 de §9.0 bis. Un
+> seul `Mesh` par pièce (pas d'instanciation, une seule occurrence par
+> clavier) : draw calls inchangés (toujours dans la fourchette « 2–3 » du
+> tableau de §9.3, devenue 4 avec la coque basse).
 
 ### 9.1 Production des modèles (non appliqué, cf. §9.0)
 
@@ -850,7 +900,7 @@ Textures ≤ 1024², compressées en KTX2. Environnement : une petite HDRI
 
 | Objet de scène                 | Type                                      | Nombre | Draw calls |
 | ------------------------------ | ----------------------------------------- | -----: | ---------: |
-| Châssis (coque, plaque, pieds) | `Mesh`                                    |    2–3 |        2–3 |
+| Châssis (plaque, coque haute, coque basse, molette) | `Mesh`                    |      4 |          4 |
 | Switches                       | `InstancedMesh`                           |      1 |          1 |
 | Keycaps                        | `InstancedMesh` **par classe de largeur** |     ~8 |         ~8 |
 | Cibles de clic invisibles      | `InstancedMesh`                           |      1 |          1 |
