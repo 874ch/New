@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { HeroKeyScene } from '@/components/marketing/hero-key-scene';
 import { ProductCard } from '@/components/shop/product-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,18 +24,24 @@ export default async function HomePage() {
 
   return (
     <>
-      <Container className="py-24">
-        <p className="text-accent text-sm font-medium">{fr.site.tagline}</p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
-          {fr.pages.home.title}
-        </h1>
-        <p className="text-muted mt-4 max-w-xl">{fr.pages.home.subtitle}</p>
+      <Container className="grid items-center gap-12 py-24 lg:grid-cols-2">
+        <div>
+          <p className="text-accent text-sm font-medium">{fr.site.tagline}</p>
+          <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight text-balance">
+            {fr.pages.home.title}
+          </h1>
+          <p className="text-muted mt-4 max-w-xl">{fr.pages.home.subtitle}</p>
 
-        <div className="mt-8 flex gap-4">
-          <Button href="/boutique">{fr.pages.home.ctaShop}</Button>
-          <Button href="/configurateur" variant="outline">
-            {fr.pages.home.ctaConfigurator}
-          </Button>
+          <div className="mt-8 flex gap-4">
+            <Button href="/boutique">{fr.pages.home.ctaShop}</Button>
+            <Button href="/configurateur" variant="outline">
+              {fr.pages.home.ctaConfigurator}
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex justify-center">
+          <HeroKeyScene />
         </div>
       </Container>
 

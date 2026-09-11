@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
 import { CHASSIS_MARGIN } from '@/components/configurator/scene/geometry';
+import { relativeLuminance } from '@/lib/color';
 import { useConfiguratorStore } from '@/lib/configurator/store';
 import type { ComponentOption, ConfiguratorCatalog } from '@/lib/configurator/types';
 
@@ -36,13 +37,7 @@ function optionMap(options: readonly ComponentOption[]): Map<string, ComponentOp
  * donc à la luminance de la couleur posée plutôt que d'être fixe.
  */
 function strokeFor(fillHex: string): string {
-  const hex = /^#[0-9a-fA-F]{6}$/.test(fillHex) ? fillHex.slice(1) : null;
-  if (!hex) return 'rgb(43 33 21 / 0.25)';
-  const r = parseInt(hex.slice(0, 2), 16) / 255;
-  const g = parseInt(hex.slice(2, 4), 16) / 255;
-  const b = parseInt(hex.slice(4, 6), 16) / 255;
-  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance < 0.4 ? 'rgb(250 245 238 / 0.4)' : 'rgb(43 33 21 / 0.25)';
+  return relativeLuminance(fillHex) < 0.4 ? 'rgb(250 245 238 / 0.4)' : 'rgb(43 33 21 / 0.25)';
 }
 
 export function KeyboardTopView({ catalog }: { catalog: ConfiguratorCatalog }) {

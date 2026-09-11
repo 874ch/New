@@ -4,12 +4,14 @@ import { useEffect, useMemo } from 'react';
 import type { BufferGeometry } from 'three';
 
 import { KeyInstances } from '@/components/configurator/scene/key-instances';
+import { KeyLabels } from '@/components/configurator/scene/key-labels';
 import {
   CHASSIS_KNOB_MARGIN,
   CHASSIS_KNOB_RADIUS,
   CHASSIS_MARGIN,
   CHASSIS_RIM_HEIGHT,
   LEVELS,
+  SWITCH_STEM_HEIGHT,
   createChassisKnobGeometry,
   createChassisPlateGeometry,
   createChassisRimGeometry,
@@ -18,11 +20,14 @@ import {
   createSwitchHousingGeometry,
   createSwitchStemGeometry,
 } from '@/components/configurator/scene/geometry';
+import { relativeLuminance } from '@/lib/color';
 import { useConfiguratorStore } from '@/lib/configurator/store';
 import type { ConfiguratorCatalog, LayoutKeyData } from '@/lib/configurator/types';
 
 const SWITCH_HOUSING_COLOR = '#2b2115';
 const EMPTY_SLOT_COLOR = '#8a7a63';
+const LABEL_LIGHT = '#f5ede1';
+const LABEL_DARK = 'rgba(43, 33, 21, 0.55)';
 
 function colorMap(options: readonly { sku: string; swatchHex: string }[]): Record<string, string> {
   return Object.fromEntries(options.map((option) => [option.sku, option.swatchHex]));
@@ -57,6 +62,10 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
 
   const chassisColor =
     catalog.chassis.find((option) => option.sku === chassisSku)?.swatchHex ?? '#ddcfb4';
+  // Le châssis peut être clair ou sombre : une étiquette à couleur fixe
+  // deviendrait illisible sur l'un des deux (même logique que `strokeFor`
+  // en vue 2D).
+  const plateLabelColor = relativeLuminance(chassisColor) < 0.4 ? LABEL_LIGHT : LABEL_DARK;
 
   const switchColors = useMemo(() => colorMap(catalog.switches), [catalog.switches]);
   const keycapColors = useMemo(() => colorMap(catalog.keycaps), [catalog.keycaps]);
@@ -139,6 +148,18 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
           opacity={0.55}
           interactive={canPaint}
         />
+        {/* Repères de touches sur le fond du châssis : pour ne pas poser un
+            switch à l'aveugle. Recouverts naturellement par le boîtier dès
+            qu'une position est assignée. */}
+        <KeyLabels
+          keys={layout.keys}
+          layout={layout}
+          y={LEVELS.plateTop + 0.005}
+          onlyWithField={null}
+          colorBySku={{}}
+          baseColor={plateLabelColor}
+          maxFontPx={22}
+        />
       </group>
 
       <group visible={showSwitches}>
@@ -164,6 +185,17 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
           baseColor={SWITCH_HOUSING_COLOR}
           colorBySku={switchColors}
           roughness={0.5}
+        />
+        {/* Une fois posé, la lettre reste visible en petit au-dessus de la
+            tige, dans la couleur du switch — confirmation visuelle rapide. */}
+        <KeyLabels
+          keys={layout.keys}
+          layout={layout}
+          y={LEVELS.stemBottom + SWITCH_STEM_HEIGHT + 0.01}
+          onlyWithField="switchSku"
+          colorBySku={switchColors}
+          baseColor={SWITCH_HOUSING_COLOR}
+          maxFontPx={13}
         />
       </group>
 
