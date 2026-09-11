@@ -39,7 +39,7 @@ function frameDistance(widthU: number, heightU: number, aspect: number, fovDeg: 
   const fovV = (fovDeg * Math.PI) / 180;
   const distanceForHeight = heightU / 2 / Math.tan(fovV / 2);
   const distanceForWidth = widthU / 2 / (Math.tan(fovV / 2) * aspect);
-  return Math.max(distanceForHeight, distanceForWidth) * 1.35;
+  return Math.max(distanceForHeight, distanceForWidth) * 1.65;
 }
 
 /**
@@ -80,6 +80,16 @@ function StudioEnvironment() {
  * Le même resync est aussi rejoué au retour au premier plan (`visibilitychange`) :
  * sur mobile, mettre l'onglet en arrière-plan peut désynchroniser le contexte
  * WebGL et les contrôles, ce qui bloquait totalement la caméra jusqu'ici.
+ *
+ * `OrbitControls` est désactivé pendant la durée de l'animation : sans ça,
+ * un client qui clique un bouton de vue puis tente aussitôt de tourner la
+ * caméra (avant la fin du recentrage, ~ une fraction de seconde) fait
+ * entrer son geste en conflit avec le `lerp` ci-dessous — les deux écrivent
+ * `camera.position` à chaque frame, et le geste de l'utilisateur peut
+ * empêcher la distance à la cible de jamais redescendre sous le seuil
+ * d'arrêt, laissant la caméra bloquée en apparence. Les boutons ne servent
+ * qu'à recentrer une fois, pas à contraindre la vue : la liberté de
+ * rotation/zoom revient dès que le recentrage est terminé.
  */
 function CameraRig({
   view,
@@ -106,17 +116,19 @@ function CameraRig({
     const [x, y, z] = VIEW_DIRECTIONS[view];
     target.current.set(x, y, z).normalize().multiplyScalar(distance);
     animating.current = true;
-  }, [view, distance]);
+    if (controlsRef.current) controlsRef.current.enabled = false;
+  }, [view, distance, controlsRef]);
 
   useEffect(() => {
     function resyncOnForeground() {
       if (document.visibilityState === 'visible') {
         animating.current = true;
+        if (controlsRef.current) controlsRef.current.enabled = false;
       }
     }
     document.addEventListener('visibilitychange', resyncOnForeground);
     return () => document.removeEventListener('visibilitychange', resyncOnForeground);
-  }, []);
+  }, [controlsRef]);
 
   useFrame((_, delta) => {
     if (!animating.current) return;
@@ -126,6 +138,7 @@ function CameraRig({
     if (camera.position.distanceTo(target.current) < 0.05) {
       camera.position.copy(target.current);
       animating.current = false;
+      if (controlsRef.current) controlsRef.current.enabled = true;
     }
   });
 

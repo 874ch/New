@@ -1306,3 +1306,65 @@ Points d'attention rencontrés :
 Validé par captures d'écran réelles à plusieurs positions de défilement
 (pas seulement le rendu final), `npm test`/`typecheck`/`lint`/build
 complets verts.
+
+## 20. Confort du configurateur 3D, étiquettes de touches, switches basiques
+
+Trois demandes distinctes du client après usage réel du configurateur.
+
+**Caméra moins zoomée par défaut** — le facteur de marge dans
+`frameDistance()` (`keyboard-scene.tsx`) est passé de 1,35 à 1,65 : le
+clavier tenait déjà entièrement dans le cadre, mais au plus juste.
+
+**Les boutons de vue (« 3/4 », « Face »…) coinçaient la caméra** — un
+client qui clique un bouton puis tente aussitôt de tourner (avant la fin
+du recentrage, ~1 seconde) fait entrer son geste en conflit avec
+l'animation programmée : les deux écrivent `camera.position` à chaque
+frame, et selon le timing, le geste de l'utilisateur peut empêcher la
+distance à la cible de jamais redescendre sous le seuil d'arrêt de
+l'animation — la caméra reste bloquée en apparence. `OrbitControls` est
+maintenant désactivé (`controls.enabled = false`) pendant la durée de
+l'animation de recentrage, et réactivé dès qu'elle se termine : les
+boutons ne font plus que recentrer une fois, sans jamais contraindre la
+vue après coup. Reproduit et vérifié avec de vrais `PointerEvent` envoyés
+directement au canvas (`page.mouse` de Playwright ne déclenche pas
+`OrbitControls` de façon fiable dans cet environnement — faux négatif du
+premier essai, cf. la même leçon déjà tirée en Phase 7 sur les tests
+canvas).
+
+**Repères de touches en 3D** — jusqu'ici, une position vide était un
+simple carré uniforme : impossible de savoir quelle touche on s'apprête à
+équiper sans compter les colonnes. `key-labels.tsx` ajoute deux calques de
+texte, chacun sur **une seule texture canvas partagée par tout le
+clavier** plutôt qu'un objet par touche (le JSX ne parcourt jamais la
+liste des touches, cf. CLAUDE.md et `KeyInstances`) : la boucle sur les 80
+positions reste une boucle JS classique dans un effet, qui dessine sur un
+`<canvas>` 2D puis marque la texture `needsUpdate`, exactement comme
+`KeyInstances` écrit ses matrices/couleurs d'instance sans jamais itérer
+en JSX.
+
+- Calque de base, posé juste au-dessus de la plaque : toutes les
+  étiquettes, dans une couleur qui s'adapte à la luminance du châssis
+  choisi (`relativeLuminance`, extrait de la vue 2D vers `src/lib/color.ts`
+  pour être partagé). Recouvert naturellement par le boîtier dès qu'un
+  switch est posé, comme une vraie plaque de montage.
+- Calque au-dessus des tiges déjà posées, en petit texte, dans la couleur
+  du switch — confirmation visuelle rapide de ce qui est déjà équipé.
+- Les deux plans ont `raycast` neutralisé (retourne toujours `null`) :
+  sans ça, une étiquette posée au-dessus d'une case ou d'une tige
+  intercepterait les clics de peinture avant qu'ils n'atteignent
+  l'`InstancedMesh` visé.
+- Écueil React Compiler rencontré deux fois pendant l'implémentation :
+  `texture.needsUpdate = true` sur une texture issue d'un `useMemo` est
+  rejeté (« cannot modify a value returned by a hook ») — corrigé en
+  passant par le matériau du mesh (peuplé via une ref JSX), jamais en
+  mutant directement la valeur mémoïsée.
+
+**Quatre switches basiques (rouge, marron, bleu, noir)** — le code couleur
+Cherry MX (rouge/noir linéaires, marron tactile, bleu clicky) est devenu
+un standard du secteur, immédiatement reconnaissable même par un client
+débutant. Ajoutés dans `prisma/seed.ts` sous la barre des switches
+« boutique » existants (`sortOrder`), à un prix plus bas qu'eux (1,20 à
+1,40 €) pour refléter des switches génériques sans colorway ni
+lubrification usine — marge alignée sur le même ordre de grandeur (~×9)
+que Kang White (coût 0,15 €) et Peach (coût 0,17 €), coûts communiqués
+par le client pour calibrer les nouveaux prix.

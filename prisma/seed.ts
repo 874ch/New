@@ -284,6 +284,70 @@ async function main(): Promise<void> {
     update: { unitPriceCents: 10_000, layoutId: layout.id },
   });
 
+  // Switches basiques : la gamme d'entrée, reconnaissable au premier coup
+  // d'œil par le code couleur Cherry MX devenu standard du secteur (rouge et
+  // noir = linéaires, marron = tactile, bleu = clicky). Positionnés avant
+  // les switches "boutique" ci-dessous (sortOrder), moins chers qu'eux :
+  // coût d'achat estimé sur des switches génériques (pas de colorway ni de
+  // lubrification usine comme les deux références suivantes), marge alignée
+  // sur le même ordre de grandeur (~×9-10) que Kang White (0,15 €) et Peach
+  // (0,17 €).
+  await db.component.upsert({
+    where: { sku: 'SW-BASIQUE-ROUGE' },
+    create: {
+      sku: 'SW-BASIQUE-ROUGE',
+      kind: 'SWITCH',
+      name: 'Switch basique rouge (linéaire)',
+      slug: 'switch-basique-rouge',
+      unitPriceCents: 120,
+      swatchHex: '#C93B3B',
+      sortOrder: 1,
+    },
+    update: { unitPriceCents: 120, swatchHex: '#C93B3B', sortOrder: 1 },
+  });
+
+  await db.component.upsert({
+    where: { sku: 'SW-BASIQUE-MARRON' },
+    create: {
+      sku: 'SW-BASIQUE-MARRON',
+      kind: 'SWITCH',
+      name: 'Switch basique marron (tactile)',
+      slug: 'switch-basique-marron',
+      unitPriceCents: 130,
+      swatchHex: '#8B5A2B',
+      sortOrder: 2,
+    },
+    update: { unitPriceCents: 130, swatchHex: '#8B5A2B', sortOrder: 2 },
+  });
+
+  await db.component.upsert({
+    where: { sku: 'SW-BASIQUE-BLEU' },
+    create: {
+      sku: 'SW-BASIQUE-BLEU',
+      kind: 'SWITCH',
+      name: 'Switch basique bleu (clicky)',
+      slug: 'switch-basique-bleu',
+      unitPriceCents: 140,
+      swatchHex: '#2F5FAD',
+      sortOrder: 3,
+    },
+    update: { unitPriceCents: 140, swatchHex: '#2F5FAD', sortOrder: 3 },
+  });
+
+  await db.component.upsert({
+    where: { sku: 'SW-BASIQUE-NOIR' },
+    create: {
+      sku: 'SW-BASIQUE-NOIR',
+      kind: 'SWITCH',
+      name: 'Switch basique noir (linéaire)',
+      slug: 'switch-basique-noir',
+      unitPriceCents: 120,
+      swatchHex: '#1A1A1A',
+      sortOrder: 4,
+    },
+    update: { unitPriceCents: 120, swatchHex: '#1A1A1A', sortOrder: 4 },
+  });
+
   await db.component.upsert({
     where: { sku: 'SW-OUTEMU-PEACH-V3' },
     create: {
@@ -293,8 +357,9 @@ async function main(): Promise<void> {
       slug: 'switch-outemu-peach-v3',
       unitPriceCents: 200,
       swatchHex: '#F7B99C',
+      sortOrder: 10,
     },
-    update: { unitPriceCents: 200, swatchHex: '#F7B99C' },
+    update: { unitPriceCents: 200, swatchHex: '#F7B99C', sortOrder: 10 },
   });
 
   await db.component.upsert({
@@ -306,8 +371,9 @@ async function main(): Promise<void> {
       slug: 'switch-ktt-kang-white-v3',
       unitPriceCents: 150,
       swatchHex: '#F2F0EA',
+      sortOrder: 11,
     },
-    update: { unitPriceCents: 150, swatchHex: '#F2F0EA' },
+    update: { unitPriceCents: 150, swatchHex: '#F2F0EA', sortOrder: 11 },
   });
 
   await db.component.upsert({
@@ -433,8 +499,9 @@ async function main(): Promise<void> {
     });
   }
 
+  const componentCount = await db.component.count();
   console.log(
-    `Seed OK — layout « ${layout.name} » (${keys.length} touches), 7 pièces au catalogue, ` +
+    `Seed OK — layout « ${layout.name} » (${keys.length} touches), ${componentCount} pièces au catalogue, ` +
       `1 produit tout fait (${standardVariants.length} variantes)` +
       `${adminEmail && adminPassword ? `, compte admin « ${adminEmail} »` : ''}.`,
   );
