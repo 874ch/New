@@ -1262,3 +1262,47 @@ Checkout. Le parcours a déjà été validé en conditions réelles lors du
 déploiement Vercel (§15) avec de vraies clés ; l'absence de clé locale
 produit une erreur claire (« Variable d'environnement manquante ») plutôt
 qu'un échec silencieux, ce qui est le comportement attendu hors production.
+
+## 19. Animation Three.js du hero d'accueil
+
+Première pièce de l'axe « animer le site avec Three.js » (Blender, demandé
+en parallèle pour le rendu du configurateur, suit un chemin séparé — cf.
+discussion §13 : nécessite une session Claude Code locale, un connecteur
+Blender ne peut pas piloter une instance qui tourne sur la machine de
+l'utilisateur depuis une session cloud).
+
+`src/components/marketing/hero-key-scene.tsx` — un switch (boîtier + tige +
+keycap) réutilisant tel quel les géométries procédurales du configurateur
+(`geometry.ts`, aucun nouvel asset) mis en scène dans le hero de la page
+d'accueil : éclaté à l'arrivée, il s'assemble et tourne au fil du
+défilement — écho au geste de « construire son clavier » plutôt qu'un
+décor gratuit.
+
+Points d'attention rencontrés :
+
+- **Coût gardé bas délibérément** : pas d'environnement PBR ni d'ombres
+  (contrairement à la scène du configurateur) — ce n'est qu'une décoration.
+  Le canvas WebGL n'est monté que sur écran large (`useMediaQuery` sur
+  `min-width: 1024px`) : aucun contexte GL créé sur mobile, cœur de cible
+  du site (cf. tout l'historique de cette session avec l'utilisateur).
+- **`prefers-reduced-motion`** : anime seulement si l'utilisateur ne l'a pas
+  exclu ; sinon le switch reste affiché, assemblé, immobile — jamais de
+  canvas chargé pour rien puis figé.
+- **Bug d'hydratation React #418** : un premier essai lisait
+  `window.matchMedia(...).matches` directement dans l'initialiseur de
+  `useState`, désynchronisant le tout premier rendu client (qui voit déjà
+  la vraie taille d'écran) du HTML statique généré au build (qui ne peut
+  que supposer `false`) — exactement le problème déjà résolu ailleurs dans
+  le projet pour le consentement cookies (`consent.ts`). Même solution :
+  `useSyncExternalStore` avec un snapshot serveur fixe.
+- **Cadrage** : la pièce étant dans le hero (visible dès le chargement, pas
+  une entrée depuis le bas de l'écran), mesurer la progression par rapport
+  à la hauteur de la fenêtre démarrait déjà l'assemblage à moitié fait. La
+  progression est donc mesurée par rapport à la position de départ de
+  l'élément lui-même (0 garanti au chargement). Les distances d'éclatement
+  initiales dépassaient aussi le cadre de la caméra (une pièce disparaissait
+  hors champ) — réduites et le groupe recentré sur l'axe de visée.
+
+Validé par captures d'écran réelles à plusieurs positions de défilement
+(pas seulement le rendu final), `npm test`/`typecheck`/`lint`/build
+complets verts.
