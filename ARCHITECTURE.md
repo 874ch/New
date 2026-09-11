@@ -771,6 +771,54 @@ prix en mars.
 > ailleurs. Le budget de perf réel de la scène (draw calls, triangles) est
 > mesuré en §10.
 
+### 9.0 bis Mise à jour : vrais modèles Blender pour keycap/switch/slot
+
+> Le constat de §9.0 (pas d'asset visuel fourni, pas de référence) ne tient
+> plus : keycap (une géométrie par largeur), boîtier de switch, tige de switch
+> (croix façon MX) et emplacement vide sont désormais de vrais modèles
+> sculptés à la main dans Blender (dish réaliste sur le dessus des keycaps,
+> coque creuse avec croix de fixation à l'intérieur, biseaux nets partout) —
+> source dans `assets/blender/keyboard-parts.blend`.
+>
+> **Pipeline** : modèles Blender → export GLB (`assets/blender/keyboard-parts.glb`,
+> un objet nommé par pièce, pas de mesh fusionné) → extraction hors ligne en
+> tableaux typés embarqués par `scripts/extract-geometry-data.mjs` (à relancer
+> après toute modification du `.blend`) →
+> `src/components/configurator/scene/geometry-data.generated.ts` →
+> `geometry.ts` construit un `BufferGeometry` à partir de ces tableaux.
+>
+> **Pourquoi ce détour plutôt qu'un chargement GLTFLoader au runtime** : les
+> fonctions de `geometry.ts` doivent rester synchrones (retourner un
+> `BufferGeometry` directement) pour que rien d'autre dans le pipeline
+> d'instanciation (§9.3) n'ait à changer, alors que `GLTFLoader` est
+> intrinsèquement asynchrone. L'extraction utilise le même `GLTFLoader` que
+> celui qu'utiliserait le navigateur (pas de parseur maison), donc pas de
+> risque de divergence sur la conversion d'axes ou la triangulation — juste
+> fait une fois, hors ligne, au lieu de à chaque chargement de page.
+>
+> Chaque géométrie garde une géométrie **par largeur de keycap distincte du
+> layout** (1u, 1,25u, 1,5u, 1,75u, 2u, 2,25u, 6,25u — vérifié depuis
+> `prisma/seed.ts`, pas depuis une liste supposée). Une largeur non couverte
+> retombe sur l'ancienne génération procédurale (`ExtrudeGeometry`), conservée
+> comme repli plutôt que supprimée — un layout futur avec une largeur inédite
+> reste rendu correctement.
+>
+> **La plaque de montage et le cadre du châssis restent procéduraux** : leurs
+> dimensions dépendent du layout choisi en base (largeur/profondeur
+> variables), un GLB est un maillage figé. La plaque perce désormais un trou
+> par position de touche (calculé depuis les vraies coordonnées du layout,
+> footprint du boîtier de switch) au lieu d'être pleine — look plaque de
+> montage réelle, toujours 100 % paramétrique. Une **molette rotative
+> décorative** (aucune fonction dans le configurateur) a été ajoutée dans le
+> coin arrière-droit du cadre : taille fixe donc modèle Blender comme les
+> autres pièces, seule sa position dépend du layout.
+>
+> **Poly count** : ~7 500 triangles au total pour les 11 géométries
+> distinctes (keycaps ×7, boîtier, tige, slot, molette) — bien en dessous du
+> budget §10, y compris une fois instancié sur un clavier de 80 touches.
+> Nombre de draw calls inchangé pour le châssis (toujours 3 `Mesh` : plaque,
+> cadre, molette — dans la fourchette « 2–3 » déjà prévue au tableau de §9.3).
+
 ### 9.1 Production des modèles (non appliqué, cf. §9.0)
 
 1. Références visuelles → **img2threejs** pour dériver les maillages de base

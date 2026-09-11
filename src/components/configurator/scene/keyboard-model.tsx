@@ -5,7 +5,12 @@ import type { BufferGeometry } from 'three';
 
 import { KeyInstances } from '@/components/configurator/scene/key-instances';
 import {
+  CHASSIS_KNOB_MARGIN,
+  CHASSIS_KNOB_RADIUS,
+  CHASSIS_MARGIN,
+  CHASSIS_RIM_HEIGHT,
   LEVELS,
+  createChassisKnobGeometry,
   createChassisPlateGeometry,
   createChassisRimGeometry,
   createKeycapGeometry,
@@ -58,8 +63,8 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
 
   const plateGeometry = useDisposable(
     useMemo(
-      () => createChassisPlateGeometry(layout.widthU, layout.heightU),
-      [layout.widthU, layout.heightU],
+      () => createChassisPlateGeometry(layout.keys, layout.widthU, layout.heightU),
+      [layout.keys, layout.widthU, layout.heightU],
     ),
   );
   const rimGeometry = useDisposable(
@@ -71,6 +76,18 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
   const slotGeometry = useDisposable(useMemo(() => createSlotGeometry(), []));
   const housingGeometry = useDisposable(useMemo(() => createSwitchHousingGeometry(), []));
   const stemGeometry = useDisposable(useMemo(() => createSwitchStemGeometry(), []));
+  const knobGeometry = useDisposable(useMemo(() => createChassisKnobGeometry(), []));
+
+  /** Coin arrière-droit du cadre : X vers la droite, Z vers l'avant (§9 geometry.ts). */
+  const knobPosition = useMemo((): [number, number, number] => {
+    const halfWidth = layout.widthU / 2 + CHASSIS_MARGIN;
+    const halfDepth = layout.heightU / 2 + CHASSIS_MARGIN;
+    return [
+      halfWidth - CHASSIS_KNOB_RADIUS - CHASSIS_KNOB_MARGIN,
+      CHASSIS_RIM_HEIGHT,
+      -halfDepth + CHASSIS_KNOB_RADIUS + CHASSIS_KNOB_MARGIN,
+    ];
+  }, [layout.widthU, layout.heightU]);
 
   /**
    * Les keycaps sont groupées par largeur : une géométrie par largeur permet
@@ -103,6 +120,9 @@ export function KeyboardModel({ catalog }: { catalog: ConfiguratorCatalog }) {
       </mesh>
       <mesh geometry={rimGeometry} receiveShadow castShadow>
         <meshStandardMaterial color={chassisColor} roughness={0.35} metalness={0.7} />
+      </mesh>
+      <mesh geometry={knobGeometry} position={knobPosition} receiveShadow castShadow>
+        <meshStandardMaterial color={chassisColor} roughness={0.3} metalness={0.75} />
       </mesh>
 
       <group visible={showSlots}>
